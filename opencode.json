@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "nvidia": {
+      "models": {
+        "deepseek-ai/deepseek-v4.1-flash": {
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": false
+        }
+      }
+    }
+  }
+}
