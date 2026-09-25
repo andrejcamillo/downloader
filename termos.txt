@@ -1,0 +1,32 @@
+Responsabilidade do Usuário
+
+Você, e somente você, é responsável por garantir que qualquer música baixada através deste aplicativo possua origem legal e não viole direitos autorais.
+
+O aplicativo não verifica automaticamente a legalidade dos downloads — essa responsabilidade é inteiramente sua.
+
+Uso Legal e Conformidade
+
+O aplicativo é apenas uma ferramenta. Cabe a você assegurar que:
+
+As músicas baixadas sejam de domínio público, tenham licença livre ou permissão do detentor dos direitos.
+
+Você não infrinja leis de propriedade intelectual (como direitos autorais, marcas registradas ou licenças de distribuição).
+
+Isenção Total do Desenvolvedor
+
+O desenvolvedor deste aplicativo:
+
+- Não tem controle sobre como o usuário utiliza o app.
+- Não se responsabiliza por violações de direitos autorais, multas, ações judiciais ou quaisquer consequências legais decorrentes do uso indevido.
+- Não garante a legalidade, autenticidade ou segurança dos arquivos baixados.
+
+Aceitação e Consequências
+
+Ao usar o aplicativo, você assume todos os riscos e concorda que:
+
+- Se houver problemas legais, a culpa é exclusivamente sua, não do desenvolvedor.
+- O desenvolvedor não fornecerá suporte jurídico em caso de disputas.
+
+Encerramento do Uso
+
+Se você não concorda com estes termos ou não pode cumprir as leis de direitos autorais, não instale nem use este aplicativo.
