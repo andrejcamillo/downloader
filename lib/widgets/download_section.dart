@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 
 class DownloadSection extends StatefulWidget {
-  final Function(String link, bool fromYouTube, bool mp3Format, String outputDir) onDownload;
+  final Function(String link, bool fromYouTube, bool mp3Format,
+      String outputDir, bool generateM3u) onDownload;
   final bool isDownloading;
 
   const DownloadSection({
@@ -155,6 +156,7 @@ class _DownloadSectionState extends State<DownloadSection> {
               _fromYouTube,
               _mp3Format,
               _outputDir,
+              _generateM3uPlaylist,
             );
           },
           icon: widget.isDownloading

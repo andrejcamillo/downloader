@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/download_service.dart';
 import '../services/file_service.dart';
-import '../services/playlist_service.dart';
+import '../utils/app_paths.dart';
 
 class HomeController extends ChangeNotifier {
   // Estado
@@ -10,7 +9,6 @@ class HomeController extends ChangeNotifier {
   double _downloadProgress = 0.0;
   String _statusMessage = '';
   String? _currentPlaylistName;
-  List<String> _newlyDownloadedFilePaths = [];
 
   // Caminhos executáveis
   late final String _ytDlpTempDir;
@@ -26,12 +24,9 @@ class HomeController extends ChangeNotifier {
   String? get playlistName => _currentPlaylistName;
 
   HomeController() {
-    final baseDir = Directory.current.path;
-    _ytDlpTempDir = '$baseDir${Platform.pathSeparator}temp_downloads';
-    _defaultMp3Dir =
-    '$baseDir${Platform.pathSeparator}downloads${Platform.pathSeparator}mp3';
-    _defaultMp4Dir =
-    '$baseDir${Platform.pathSeparator}downloads${Platform.pathSeparator}mp4';
+    _ytDlpTempDir = AppPaths.tempDir;
+    _defaultMp3Dir = AppPaths.defaultMp3Dir;
+    _defaultMp4Dir = AppPaths.defaultMp4Dir;
 
     // Usa FileService para garantir que as pastas existam
     FileService().ensureOutputDir(_ytDlpTempDir);
@@ -85,7 +80,7 @@ class HomeController extends ChangeNotifier {
 
       final downloader = DownloadService(ytDlpTempDir: _ytDlpTempDir);
 
-      _newlyDownloadedFilePaths = await downloader.performDownload(
+      await downloader.performDownload(
         isYouTube: fromYouTube,
         isMp3: mp3Format,
         link: link,

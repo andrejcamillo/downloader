@@ -1,13 +1,19 @@
 import 'dart:io';
 
+import 'app_paths.dart';
+
 class Logger {
-  static final _logFile =
-  File('${Directory.current.path}${Platform.pathSeparator}log.txt');
+  static final _logFile = File(AppPaths.logFilePath);
 
   static Future<void> log(String message) async {
     final timestamp = DateTime.now().toIso8601String();
     final fullMessage = '[$timestamp] $message\n';
-    await _logFile.writeAsString(fullMessage, mode: FileMode.append);
+    try {
+      await _logFile.writeAsString(fullMessage, mode: FileMode.append);
+    } catch (_) {
+      // O log nunca deve quebrar o app (ex.: pasta de instalação sem
+      // permissão de escrita). Falhas de log são ignoradas silenciosamente.
+    }
   }
 
   static Future<void> info(String message) async {

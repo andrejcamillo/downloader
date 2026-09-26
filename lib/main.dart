@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:window_size/window_size.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'controllers/home_controller.dart';
 import 'controllers/settings_controller.dart';
@@ -12,8 +12,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowMinSize(const Size(500, 800)); // Tamanho mínimo
-    setWindowMaxSize(Size.infinite);        // Permite maximizar
+    try {
+      await windowManager.ensureInitialized();
+      const options = WindowOptions(
+        size: Size(500, 800),
+        minimumSize: Size(500, 800),
+        maximumSize: Size.infinite,
+      );
+      await windowManager.waitUntilReadyToShow(options, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
+    } catch (_) {
+      // Falha ao configurar a janela não deve impedir o app de iniciar.
+    }
   }
 
   // 🔹 Inicializa o SettingsController antes do app

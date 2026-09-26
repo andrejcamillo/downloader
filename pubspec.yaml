@@ -18,7 +18,9 @@ dependencies:
   image_picker: ^1.0.8 # <<<<< CERTIFIQUE-SE QUE ESTA LINHA ESTÁ AQUI
   process_run: ^1.0.1 # <<<<< VERSÃO ATUALIZADA PARA NULL SAFETY
   path: ^1.8.3 # Adicione ou confirme que esta linha existe
-  window_size: ^0.1.0
+  window_manager: ^0.5.2
+  http: ^1.6.0
+  archive: ^4.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

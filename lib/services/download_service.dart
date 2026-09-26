@@ -21,6 +21,13 @@ class DownloadService {
     String? playlistName,
     bool retrying = false, // <- controle interno para evitar loop infinito
   }) async {
+    if (isYouTube) {
+      if (!await UpdaterService.ensureExecutables(youtube: true)) {
+        throw Exception(
+            'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).');
+      }
+    }
+
     final environmentVars = Map<String, String>.from(Platform.environment);
 
     String command;
@@ -48,11 +55,11 @@ class DownloadService {
       environment: environmentVars,
     );
 
-    process.stdout.transform(SystemEncoding().decoder).listen((line) {
+    process.stdout.transform(const SystemEncoding().decoder).listen((line) {
       Logger.info(line.trim());
     });
 
-    process.stderr.transform(SystemEncoding().decoder).listen((line) {
+    process.stderr.transform(const SystemEncoding().decoder).listen((line) {
       Logger.error(line.trim());
     });
 

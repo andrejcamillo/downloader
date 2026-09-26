@@ -1,13 +1,11 @@
 import 'dart:io';
 
+import 'app_paths.dart';
+
 class ExecutableHelper {
-  static final String _baseDir = Directory.current.path;
-  static final String ytDlpExe =
-      '$_baseDir${Platform.pathSeparator}bin${Platform.pathSeparator}yt-dlp.exe';
-  static final String spotdlExe =
-      '$_baseDir${Platform.pathSeparator}bin${Platform.pathSeparator}spotdl.exe';
-  static final String ffmpegExe =
-      '$_baseDir${Platform.pathSeparator}bin${Platform.pathSeparator}ffmpeg.exe';
+  static final String ytDlpExe = AppPaths.ytDlpExe;
+  static final String spotdlExe = AppPaths.spotdlExe;
+  static final String ffmpegExe = AppPaths.ffmpegExe;
 
   /// yt-dlp → retorna comando + args corretos
   static (String, List<String>) buildYtDlpCommand({
@@ -27,21 +25,37 @@ class ExecutableHelper {
   '0',
   '--add-metadata',
   '--embed-thumbnail',
+  '--ffmpeg-location',
+  AppPaths.binDir,
   '--output',
   outputTemplate,
   '--windows-filenames',
   '--ignore-errors',
   '--no-part',
+  '--retries',
+  '10',
+  '--fragment-retries',
+  '10',
+  '--retry-sleep',
+  '5',
   link,
   ]
       : [
   '-f',
   'best[ext=mp4]',
+  '--ffmpeg-location',
+  AppPaths.binDir,
   '--output',
   outputTemplate,
   '--windows-filenames',
   '--ignore-errors',
   '--no-part',
+  '--retries',
+  '10',
+  '--fragment-retries',
+  '10',
+  '--retry-sleep',
+  '5',
   link,
   ];
 

@@ -15,8 +15,6 @@ class HomePage extends StatelessWidget {
     return Consumer2<HomeController, SettingsController>(
       builder: (context, homeController, settings, _) {
         final theme = Theme.of(context);
-        final currentPrimarySwatch =
-        MaterialColor(theme.primaryColor.value, const <int, Color>{});
 
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -87,13 +85,14 @@ class HomePage extends StatelessWidget {
                           ],
                         ),
                         child: DownloadSection(
-                          onDownload:
-                              (link, fromYouTube, mp3Format, outputDir) {
+                          onDownload: (link, fromYouTube, mp3Format, outputDir,
+                              generateM3u) {
                             homeController.performDownload(
                               rawLink: link,
                               fromYouTube: fromYouTube,
                               mp3Format: mp3Format,
                               finalOutputDir: outputDir,
+                              generateM3u: generateM3u,
                             );
                           },
                           isDownloading: homeController.isDownloading,
