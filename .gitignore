@@ -45,3 +45,6 @@ app.*.map.json
 /bin/
 /downloads/
 log.txt
+
+# Lockfile resolvido por máquina (Flutter SDKs diferentes entre PCs de dev)
+pubspec.lock
