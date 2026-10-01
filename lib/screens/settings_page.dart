@@ -24,6 +24,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final success = await updater();
 
+    if (!mounted) return;
+
     setState(() {
       _loading = false;
       _status = success
@@ -45,6 +47,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final ffmpeg = await UpdaterService.updateFfmpeg();
 
     final success = yt && spot && ffmpeg;
+
+    if (!mounted) return;
 
     setState(() {
       _loading = false;
