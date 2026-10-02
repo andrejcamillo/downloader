@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../controllers/settings_controller.dart';
 import '../services/updater_service.dart';
@@ -64,6 +65,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Consumer<SettingsController>(
       builder: (context, controller, _) {
+        final mp3Label = controller.mp3Dir.isEmpty
+            ? 'padrão (downloads/mp3)'
+            : p.basename(controller.mp3Dir);
+        final mp4Label = controller.mp4Dir.isEmpty
+            ? 'padrão (downloads/mp4)'
+            : p.basename(controller.mp4Dir);
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Configurações'),
@@ -138,7 +146,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       Tooltip(
                         message: controller.mp3Dir,
-                        child: Text("MP3: ${controller.mp3Dir.split('\\').last}"),
+                        child: Text("MP3: $mp3Label"),
                       ),
                       IconButton(
                         icon: const Icon(Icons.folder),
@@ -150,7 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       Tooltip(
                         message: controller.mp4Dir,
-                        child: Text("MP4: ${controller.mp4Dir.split('\\').last}"),
+                        child: Text("MP4: $mp4Label"),
                       ),
                       IconButton(
                         icon: const Icon(Icons.folder),
