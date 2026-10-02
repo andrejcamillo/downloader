@@ -87,11 +87,15 @@ class HomePage extends StatelessWidget {
                         child: DownloadSection(
                           onDownload: (link, fromYouTube, mp3Format, outputDir,
                               generateM3u) {
+                            final configuredDir =
+                                mp3Format ? settings.mp3Dir : settings.mp4Dir;
                             homeController.performDownload(
                               rawLink: link,
                               fromYouTube: fromYouTube,
                               mp3Format: mp3Format,
-                              finalOutputDir: outputDir,
+                              finalOutputDir: outputDir.isNotEmpty
+                                  ? outputDir
+                                  : configuredDir,
                               generateM3u: generateM3u,
                             );
                           },

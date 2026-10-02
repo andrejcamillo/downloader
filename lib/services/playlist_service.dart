@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
 
 class PlaylistService {
@@ -19,8 +20,10 @@ class PlaylistService {
       final m3uFile = File('$outputDir/$sanitizedName.m3u');
       final sink = m3uFile.openWrite();
 
+      sink.writeln('#EXTM3U');
+
       for (var filePath in downloadedFilePaths) {
-        sink.writeln(filePath);
+        sink.writeln(p.basename(filePath));
       }
 
       await sink.flush();

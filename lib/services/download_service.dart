@@ -30,6 +30,11 @@ class DownloadService {
 
     final environmentVars = Map<String, String>.from(Platform.environment);
 
+    // Windows usa cp1252 no console; força UTF-8 para o Python empacotado
+    // (yt-dlp/spotdl) não quebrar ao imprimir caracteres especiais.
+    environmentVars['PYTHONIOENCODING'] = 'utf-8';
+    environmentVars['PYTHONUTF8'] = '1';
+
     String command;
     List<String> args;
 

@@ -19,7 +19,8 @@ void main() {
       }
     });
 
-    test('gera .m3u com nome sanitizado e conteúdo com os caminhos', () async {
+    test('gera .m3u com nome sanitizado e conteúdo relativo (basename)',
+        () async {
       final songs = [
         p.join(tempDir.path, 'musica1.mp3'),
         p.join(tempDir.path, 'musica2.mp3'),
@@ -36,7 +37,8 @@ void main() {
       expect(await m3uFile.exists(), isTrue);
 
       final content = await m3uFile.readAsLines();
-      expect(content, songs);
+      expect(content.first, '#EXTM3U');
+      expect(content.skip(1).toList(), songs.map(p.basename).toList());
     });
 
     test('não gera arquivo quando a lista de músicas está vazia', () async {
