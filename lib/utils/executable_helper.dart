@@ -79,6 +79,7 @@ class ExecutableHelper {
   '--overwrite',
   'force',
   '--no-cache',
+  '--simple-tui',
   '--bitrate',
   '192k',
   ];
