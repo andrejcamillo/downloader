@@ -75,7 +75,7 @@ class ExecutableHelper {
   '--output',
   finalOutputDir,
   '--log-level',
-  'DEBUG',
+  'INFO',
   '--overwrite',
   'force',
   '--no-cache',

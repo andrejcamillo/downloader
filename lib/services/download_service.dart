@@ -53,6 +53,8 @@ class DownloadService {
 
     Logger.info("Iniciando processo: $command ${args.join(' ')}");
 
+    final beforeFiles = FileService.listNewFiles(finalOutputDir);
+
     final process = await Process.start(
       command,
       args,
@@ -70,54 +72,81 @@ class DownloadService {
 
     final exitCode = await process.exitCode;
 
-    if (exitCode == 0) {
-      // garante que a pasta final exista
-      await FileService().ensureOutputDir(finalOutputDir);
+    // Usada tanto em produção (detecção de arquivos novos do spotdl) quanto
+    // nos testes; a anotação @visibleForTesting documenta a testabilidade.
+    // ignore: invalid_use_of_visible_for_testing_member
+    final newFiles = FileService.diffNewFiles(
+      beforeFiles,
+      FileService.listNewFiles(finalOutputDir),
+    );
 
-      List<String> downloadedFiles = [];
-      if (isYouTube) {
-        downloadedFiles = await FileService.moveFilesFromTempToFinal(
-          ytDlpTempDir,
-          finalOutputDir,
+    // O spotdl pode terminar com exitCode=0 mesmo falhando em todas as
+    // faixas (ex.: 403 do yt-dlp vendorizado). Nesse caso não há arquivos
+    // novos e tratamos como falha.
+    final spotdlNoFiles = !isYouTube && exitCode == 0 && newFiles.isEmpty;
+    final shouldUpdate = exitCode != 0 || spotdlNoFiles;
+
+    if (shouldUpdate && !retrying) {
+      if (exitCode != 0) {
+        Logger.error("Falha no download: exitCode=$exitCode");
+      } else {
+        Logger.error(
+            "spotdl terminou com exitCode=0 sem baixar nenhuma música nova.");
+      }
+
+      final provider = isYouTube ? "yt-dlp" : "spotDL";
+      Logger.info("Tentando atualizar $provider automaticamente...");
+      final updated = isYouTube
+          ? await UpdaterService.updateYtDlp()
+          : await UpdaterService.updateSpotdl();
+      if (updated) {
+        Logger.info("$provider atualizado. Tentando o download novamente...");
+        return await performDownload(
+          isYouTube: isYouTube,
+          isMp3: isMp3,
+          link: link,
+          finalOutputDir: finalOutputDir,
+          generateM3u: generateM3u,
+          playlistName: playlistName,
+          retrying: true, // <- evita loop infinito
         );
       } else {
-        downloadedFiles = FileService.listNewFiles(finalOutputDir);
+        Logger.error("Falha ao atualizar $provider automaticamente.");
       }
+    }
 
-      if (generateM3u && downloadedFiles.isNotEmpty) {
-        await PlaylistService.generateM3uFile(
-          finalOutputDir,
-          playlistName ?? "Minha Playlist",
-          downloadedFiles,
-        );
-      }
-
-      Logger.info("Download concluído com sucesso!");
-      return downloadedFiles;
-    } else {
-      Logger.error("Falha no download: exitCode=$exitCode");
-
-      // Se for YouTube e ainda não tentamos atualizar, vamos tentar
-      if (isYouTube && !retrying) {
-        Logger.info("Tentando atualizar yt-dlp automaticamente...");
-        final updated = await UpdaterService.updateYtDlp();
-        if (updated) {
-          Logger.info("yt-dlp atualizado. Tentando o download novamente...");
-          return await performDownload(
-            isYouTube: isYouTube,
-            isMp3: isMp3,
-            link: link,
-            finalOutputDir: finalOutputDir,
-            generateM3u: generateM3u,
-            playlistName: playlistName,
-            retrying: true, // <- evita loop infinito
-          );
-        } else {
-          Logger.error("Falha ao atualizar yt-dlp automaticamente.");
-        }
-      }
-
+    if (exitCode != 0) {
       throw Exception("Erro no processo de download (exitCode=$exitCode)");
     }
+
+    if (spotdlNoFiles) {
+      throw Exception(
+          "O spotdl terminou sem baixar nenhuma música. Tente atualizar o spotDL nas Configurações ou verifique o log.txt.");
+    }
+
+    // Caminho feliz: exitCode==0 com arquivos novos (ou fluxo YouTube).
+    // garante que a pasta final exista
+    await FileService().ensureOutputDir(finalOutputDir);
+
+    List<String> downloadedFiles = [];
+    if (isYouTube) {
+      downloadedFiles = await FileService.moveFilesFromTempToFinal(
+        ytDlpTempDir,
+        finalOutputDir,
+      );
+    } else {
+      downloadedFiles = newFiles;
+    }
+
+    if (generateM3u && downloadedFiles.isNotEmpty) {
+      await PlaylistService.generateM3uFile(
+        finalOutputDir,
+        playlistName ?? "Minha Playlist",
+        downloadedFiles,
+      );
+    }
+
+    Logger.info("Download concluído com sucesso!");
+    return downloadedFiles;
   }
 }

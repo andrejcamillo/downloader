@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../utils/logger.dart';
 
 class FileService {
@@ -64,5 +65,12 @@ class FileService {
 
     Logger.info("Arquivos encontrados em $dirPath: ${files.length}");
     return files;
+  }
+
+  /// Retorna os caminhos presentes em [after] mas não em [before].
+  @visibleForTesting
+  static List<String> diffNewFiles(List<String> before, List<String> after) {
+    final beforeSet = before.toSet();
+    return after.where((f) => !beforeSet.contains(f)).toList();
   }
 }
