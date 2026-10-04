@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import '../utils/app_paths.dart';
+import '../utils/executable_helper.dart';
 import '../utils/logger.dart';
 
 class UpdaterService {
@@ -47,6 +48,27 @@ class UpdaterService {
       }
     } catch (e) {
       Logger.error("Erro ao atualizar spotDL: $e");
+      return false;
+    }
+  }
+
+  /// Atualiza spotdl+yt-dlp via pip (modo preferido quando spotdl vem do pip).
+  static Future<bool> updateSpotdlPip() async {
+    Logger.info('Atualizando spotdl/yt-dlp via pip...');
+    try {
+      final result = await Process.run(
+        'python',
+        ['-m', 'pip', 'install', '--user', '--upgrade', 'spotdl', 'yt-dlp'],
+      );
+      if (result.exitCode == 0) {
+        ExecutableHelper.resetSpotdlRunnerCache();
+        Logger.info('spotdl/yt-dlp atualizados via pip.');
+        return true;
+      }
+      Logger.error('pip install falhou (exitCode=${result.exitCode})');
+      return false;
+    } catch (e) {
+      Logger.error('Erro ao atualizar via pip: $e');
       return false;
     }
   }
@@ -131,53 +153,84 @@ class UpdaterService {
   /// Garante que os executáveis necessários estejam presentes, baixando o
   /// que faltar. Retorna `false` se algum continuar ausente.
   ///
-  /// O parâmetro [youtube] existe para permitir a inclusão do spotdl no
-  /// futuro; hoje apenas yt-dlp e ffmpeg são necessários.
+  /// Para YouTube, requer yt-dlp + ffmpeg. Para Spotify, requer ffmpeg +
+  /// spotdl (preferindo a instalação via pip, com fallback para o exe).
   static Future<bool> ensureExecutables({required bool youtube}) async {
-    final ytDlpFile = File(AppPaths.ytDlpExe);
+    if (youtube) {
+      final ytDlpFile = File(AppPaths.ytDlpExe);
 
-    if (!ytDlpFile.existsSync()) {
-      Logger.info("yt-dlp não encontrado. Baixando...");
-      await updateYtDlp();
-    } else {
-      bool needsUpdate;
-      try {
-        needsUpdate =
-            shouldUpdateYtDlp(ytDlpFile.lastModifiedSync(), DateTime.now());
-      } catch (e) {
-        Logger.warn(
-            "Não foi possível ler a data do yt-dlp ($e). Atualizando por precaução.");
-        needsUpdate = true;
-      }
-
-      if (needsUpdate) {
-        Logger.info("yt-dlp com mais de 7 dias. Atualizando proativamente...");
-        final updated = await updateYtDlp();
-        if (!updated) {
-          // O exe antigo continua disponível; o retry de falha do
-          // DownloadService ainda protege contra 403.
+      if (!ytDlpFile.existsSync()) {
+        Logger.info("yt-dlp não encontrado. Baixando...");
+        await updateYtDlp();
+      } else {
+        bool needsUpdate;
+        try {
+          needsUpdate =
+              shouldUpdateYtDlp(ytDlpFile.lastModifiedSync(), DateTime.now());
+        } catch (e) {
           Logger.warn(
-              "Falha ao atualizar yt-dlp proativamente. Prosseguindo com o existente.");
+              "Não foi possível ler a data do yt-dlp ($e). Atualizando por precaução.");
+          needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+          Logger.info("yt-dlp com mais de 7 dias. Atualizando proativamente...");
+          final updated = await updateYtDlp();
+          if (!updated) {
+            // O exe antigo continua disponível; o retry de falha do
+            // DownloadService ainda protege contra 403.
+            Logger.warn(
+                "Falha ao atualizar yt-dlp proativamente. Prosseguindo com o existente.");
+          }
         }
       }
+
+      await _ensureFfmpeg();
+
+      final ytDlpOk = File(AppPaths.ytDlpExe).existsSync();
+      final ffmpegOk = File(AppPaths.ffmpegExe).existsSync();
+
+      if (!ytDlpOk || !ffmpegOk) {
+        Logger.error(
+            "Executáveis ausentes após tentativa de download "
+            "(yt-dlp: $ytDlpOk, ffmpeg: $ffmpegOk).");
+        return false;
+      }
+
+      return true;
     }
 
-    if (!File(AppPaths.ffmpegExe).existsSync()) {
-      Logger.info("ffmpeg não encontrado. Baixando...");
-      await updateFfmpeg();
+    // Fluxo Spotify: ffmpeg + spotdl (pip preferencial, fallback exe).
+    await _ensureFfmpeg();
+
+    final runner = await ExecutableHelper.resolveSpotdlRunner();
+    var spotdlOk = true;
+
+    if (runner.$1 == AppPaths.spotdlExe &&
+        !File(AppPaths.spotdlExe).existsSync()) {
+      Logger.info("spotdl.exe não encontrado. Baixando...");
+      await updateSpotdl();
+      spotdlOk = File(AppPaths.spotdlExe).existsSync();
     }
 
-    final ytDlpOk = File(AppPaths.ytDlpExe).existsSync();
     final ffmpegOk = File(AppPaths.ffmpegExe).existsSync();
 
-    if (!ytDlpOk || !ffmpegOk) {
+    if (!spotdlOk || !ffmpegOk) {
       Logger.error(
-          "Executáveis ausentes após tentativa de download "
-          "(yt-dlp: $ytDlpOk, ffmpeg: $ffmpegOk).");
+          "Não foi possível preparar o spotdl/ffmpeg. Instale Python e rode "
+          "'pip install spotdl' ou verifique a conexão.");
       return false;
     }
 
     return true;
+  }
+
+  /// Garante que o ffmpeg esteja presente, baixando se necessário.
+  static Future<void> _ensureFfmpeg() async {
+    if (!File(AppPaths.ffmpegExe).existsSync()) {
+      Logger.info("ffmpeg não encontrado. Baixando...");
+      await updateFfmpeg();
+    }
   }
 
   /// Função auxiliar

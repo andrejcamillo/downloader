@@ -21,11 +21,10 @@ class DownloadService {
     String? playlistName,
     bool retrying = false, // <- controle interno para evitar loop infinito
   }) async {
-    if (isYouTube) {
-      if (!await UpdaterService.ensureExecutables(youtube: true)) {
-        throw Exception(
-            'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).');
-      }
+    if (!await UpdaterService.ensureExecutables(youtube: isYouTube)) {
+      throw Exception(isYouTube
+          ? 'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).'
+          : 'Falha ao preparar spotdl/ffmpeg (instale Python + pip install spotdl ou verifique a conexão).');
     }
 
     final environmentVars = Map<String, String>.from(Platform.environment);
@@ -37,6 +36,7 @@ class DownloadService {
 
     String command;
     List<String> args;
+    (String, List<String>)? spotdlRunner;
 
     if (isYouTube) {
       (command, args) = ExecutableHelper.buildYtDlpCommand(
@@ -45,7 +45,10 @@ class DownloadService {
         tempDir: ytDlpTempDir,
       );
     } else {
+      final runner = await ExecutableHelper.resolveSpotdlRunner();
+      spotdlRunner = runner;
       (command, args) = ExecutableHelper.buildSpotdlCommand(
+        runner: runner,
         link: link,
         finalOutputDir: finalOutputDir,
       );
@@ -94,13 +97,20 @@ class DownloadService {
             "spotdl terminou com exitCode=0 sem baixar nenhuma música nova.");
       }
 
-      final provider = isYouTube ? "yt-dlp" : "spotDL";
-      Logger.info("Tentando atualizar $provider automaticamente...");
-      final updated = isYouTube
-          ? await UpdaterService.updateYtDlp()
-          : await UpdaterService.updateSpotdl();
+      bool updated;
+      if (isYouTube) {
+        Logger.info("Tentando atualizar yt-dlp automaticamente...");
+        updated = await UpdaterService.updateYtDlp();
+      } else if (spotdlRunner != null && spotdlRunner.$1 == 'python') {
+        Logger.info(
+            "Tentando atualizar spotdl/yt-dlp via pip automaticamente...");
+        updated = await UpdaterService.updateSpotdlPip();
+      } else {
+        Logger.info("Tentando atualizar spotDL automaticamente...");
+        updated = await UpdaterService.updateSpotdl();
+      }
       if (updated) {
-        Logger.info("$provider atualizado. Tentando o download novamente...");
+        Logger.info("Atualizado. Tentando o download novamente...");
         return await performDownload(
           isYouTube: isYouTube,
           isMp3: isMp3,
@@ -111,7 +121,7 @@ class DownloadService {
           retrying: true, // <- evita loop infinito
         );
       } else {
-        Logger.error("Falha ao atualizar $provider automaticamente.");
+        Logger.error("Falha ao atualizar automaticamente.");
       }
     }
 

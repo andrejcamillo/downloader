@@ -95,6 +95,40 @@ void main() {
       expect(mp4Args[mp4Args.indexOf('--output') + 1], expectedTemplate);
     });
   });
+
+  group('ExecutableHelper.buildSpotdlCommand', () {
+    const link = 'https://open.spotify.com/track/ABC';
+    const outputDir = '/tmp/mp3';
+
+    test('com runner pip usa python -m spotdl e mantém os demais args', () {
+      final (command, args) = ExecutableHelper.buildSpotdlCommand(
+        runner: ('python', const ['-m', 'spotdl']),
+        link: link,
+        finalOutputDir: outputDir,
+      );
+
+      expect(command, 'python');
+      expect(args.take(3).toList(), ['-m', 'spotdl', 'download']);
+      expect(args[3], link);
+      expect(_valueOf(args, '--ffmpeg'), AppPaths.ffmpegExe);
+      expect(_valueOf(args, '--output'), outputDir);
+      expect(_valueOf(args, '--log-level'), 'INFO');
+      expect(args.contains('--simple-tui'), isTrue);
+    });
+
+    test('com runner exe usa o caminho do spotdl e args começam com download',
+        () {
+      final (command, args) = ExecutableHelper.buildSpotdlCommand(
+        runner: (AppPaths.spotdlExe, const []),
+        link: link,
+        finalOutputDir: outputDir,
+      );
+
+      expect(command, AppPaths.spotdlExe);
+      expect(args.first, 'download');
+      expect(args[1], link);
+    });
+  });
 }
 
 String? _valueOf(List<String> args, String flag) {
