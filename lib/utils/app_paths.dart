@@ -38,6 +38,11 @@ class AppPaths {
 
   static String get ffprobeExe => p.join(binDir, 'ffprobe.exe');
 
+  /// Python embutido distribuído junto ao app (bin/python/), usado como
+  /// preferência para rodar o spotdl quando disponível.
+  static String get embeddedPythonExe =>
+      p.join(binDir, 'python', Platform.isWindows ? 'python.exe' : 'python3');
+
   /// Diretório temporário usado pelo yt-dlp.
   static String get tempDir => p.join(baseDir, 'temp_downloads');
 

@@ -54,10 +54,16 @@ class UpdaterService {
 
   /// Atualiza spotdl+yt-dlp via pip (modo preferido quando spotdl vem do pip).
   static Future<bool> updateSpotdlPip() async {
+    final runner = await ExecutableHelper.resolveSpotdlRunner();
+    if (runner.$1 == AppPaths.spotdlExe) {
+      Logger.error('spotdl não está em modo pip.');
+      return false;
+    }
+
     Logger.info('Atualizando spotdl/yt-dlp via pip...');
     try {
       final result = await Process.run(
-        'python',
+        runner.$1,
         ['-m', 'pip', 'install', '--user', '--upgrade', 'spotdl', 'yt-dlp'],
       );
       if (result.exitCode == 0) {

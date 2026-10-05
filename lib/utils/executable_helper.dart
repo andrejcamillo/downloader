@@ -21,6 +21,23 @@ class ExecutableHelper {
   static void resetSpotdlRunnerCache() => _spotdlRunner = null;
 
   static Future<(String, List<String>)> _resolveSpotdlRunner() async {
+    // 1) Python embutido distribuído junto ao app (bin/python/).
+    final embedded = AppPaths.embeddedPythonExe;
+    if (File(embedded).existsSync()) {
+      try {
+        final result =
+            await Process.run(embedded, ['-m', 'spotdl', '--version']);
+        if (result.exitCode == 0) {
+          Logger.info(
+              'spotdl via python embutido detectado: ${result.stdout}'.trim());
+          return (embedded, ['-m', 'spotdl']);
+        }
+      } catch (_) {
+        // python embutido falhou; segue para a próxima opção
+      }
+    }
+
+    // 2) Python do sistema (instalação via pip).
     try {
       final result =
           await Process.run('python', ['-m', 'spotdl', '--version']);
@@ -31,6 +48,8 @@ class ExecutableHelper {
     } catch (_) {
       // python ausente ou spotdl não instalado via pip
     }
+
+    // 3) Fallback: binário spotdl.exe em bin/.
     return (AppPaths.spotdlExe, <String>[]);
   }
 

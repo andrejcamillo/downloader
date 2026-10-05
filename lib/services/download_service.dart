@@ -101,7 +101,8 @@ class DownloadService {
       if (isYouTube) {
         Logger.info("Tentando atualizar yt-dlp automaticamente...");
         updated = await UpdaterService.updateYtDlp();
-      } else if (spotdlRunner != null && spotdlRunner.$1 == 'python') {
+      } else if (spotdlRunner != null &&
+          spotdlRunner.$1 != ExecutableHelper.spotdlExe) {
         Logger.info(
             "Tentando atualizar spotdl/yt-dlp via pip automaticamente...");
         updated = await UpdaterService.updateSpotdlPip();

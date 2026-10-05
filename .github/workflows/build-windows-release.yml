@@ -1,0 +1,138 @@
+# CI do Music Downloader: compila o app no Windows, embute as ferramentas
+# externas (yt-dlp, spotdl, ffmpeg) em bin/ e empacota tudo num zip.
+#
+# Observação importante: o pubspec.lock NÃO é versionado intencionalmente
+# (as máquinas de dev usam versões diferentes do Flutter SDK). Por isso o
+# `flutter pub get` resolve as versões a cada execução.
+name: Build Windows Release
+
+on:
+  # Permite disparo manual pela aba Actions.
+  workflow_dispatch:
+  # Publica automaticamente quando uma tag v* é empurrada.
+  push:
+    tags:
+      - 'v*'
+
+# Necessário para o softprops/action-gh-release criar a release.
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter (channel stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Resolver dependências
+        run: flutter pub get
+
+      - name: Análise estática (zero errors)
+        run: flutter analyze
+
+      - name: Testes
+        run: flutter test
+
+      - name: Build Windows (release)
+        run: flutter build windows --release
+
+      # Monta a pasta dist/ com o executável e as DLLs do app.
+      - name: Montar dist/ com o app compilado
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Path 'build\windows\x64\runner\Release\*' -Destination 'dist\' -Recurse -Force
+
+      # Popula dist\bin\ com yt-dlp, spotdl e ffmpeg/ffprobe.
+      - name: Baixar ferramentas para dist\bin
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path 'dist\bin' | Out-Null
+
+          # yt-dlp: asset oficial mais recente.
+          Invoke-WebRequest `
+            -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' `
+            -OutFile 'dist\bin\yt-dlp.exe' `
+            -Headers @{ 'User-Agent' = 'opencode-ci' }
+
+          # spotdl: consulta a última release e pega o asset Windows (win32).
+          $release = Invoke-RestMethod `
+            -Uri 'https://api.github.com/repos/spotDL/spotify-downloader/releases/latest' `
+            -Headers @{ 'User-Agent' = 'opencode-ci' }
+          $asset = $release.assets |
+            Where-Object { $_.name -like '*-win32.exe' } |
+            Select-Object -First 1
+          if (-not $asset) {
+            throw 'Asset -win32.exe não encontrado na release do spotDL.'
+          }
+          Invoke-WebRequest `
+            -Uri $asset.browser_download_url `
+            -OutFile 'dist\bin\spotdl.exe' `
+            -Headers @{ 'User-Agent' = 'opencode-ci' }
+
+          # ffmpeg: baixa o zip essentials e copia apenas ffmpeg.exe/ffprobe.exe.
+          $ffmpegTmp = Join-Path $env:RUNNER_TEMP 'ffmpeg'
+          New-Item -ItemType Directory -Force -Path $ffmpegTmp | Out-Null
+          $ffmpegZip = Join-Path $ffmpegTmp 'ffmpeg.zip'
+          Invoke-WebRequest `
+            -Uri 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' `
+            -OutFile $ffmpegZip
+          Expand-Archive -Path $ffmpegZip -DestinationPath $ffmpegTmp -Force
+          $ffmpeg = Get-ChildItem -Path $ffmpegTmp -Recurse -Filter 'ffmpeg.exe' | Select-Object -First 1
+          $ffprobe = Get-ChildItem -Path $ffmpegTmp -Recurse -Filter 'ffprobe.exe' | Select-Object -First 1
+          if (-not $ffmpeg) {
+            throw 'ffmpeg.exe não encontrado no zip baixado.'
+          }
+          Copy-Item $ffmpeg.FullName 'dist\bin\ffmpeg.exe' -Force
+          if ($ffprobe) {
+            Copy-Item $ffprobe.FullName 'dist\bin\ffprobe.exe' -Force
+          }
+          Remove-Item $ffmpegZip -Force -ErrorAction SilentlyContinue
+
+      # Python 3.12 usado para montar o runtime embutido.
+      - name: Instalar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Python embutido com spotdl+yt-dlp, copiado para dist\bin\python\.
+      - name: Montar Python embutido
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install spotdl yt-dlp
+
+          # Descobre a raiz da instalação do Python e copia para dist\bin\python.
+          $py = python -c "import sys; print(sys.base_prefix)"
+          Copy-Item -Recurse $py 'dist\bin\python'
+
+          # Sanity check: o Python embutido precisa rodar o spotdl.
+          & 'dist\bin\python\python.exe' -m spotdl --version
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Sanity check falhou: python embutido não executa spotdl.'
+          }
+
+      - name: Empacotar zip
+        shell: pwsh
+        run: Compress-Archive -Path 'dist\*' -DestinationPath 'music-downloader-windows.zip' -Force
+
+      - name: Publicar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-downloader-windows
+          path: music-downloader-windows.zip
+
+      # Cria a release apenas quando o gatilho for uma tag v*.
+      - name: Anexar zip à release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: music-downloader-windows.zip
+          name: ${{ github.ref_name }}

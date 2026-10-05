@@ -116,6 +116,21 @@ void main() {
       expect(args.contains('--simple-tui'), isTrue);
     });
 
+    test('com runner de python embutido customizado usa o caminho informado',
+        () {
+      const embedded = r'C:\App\bin\python\python.exe';
+
+      final (command, args) = ExecutableHelper.buildSpotdlCommand(
+        runner: (embedded, const ['-m', 'spotdl']),
+        link: link,
+        finalOutputDir: outputDir,
+      );
+
+      expect(command, embedded);
+      expect(args.take(3).toList(), ['-m', 'spotdl', 'download']);
+      expect(args[3], link);
+    });
+
     test('com runner exe usa o caminho do spotdl e args começam com download',
         () {
       final (command, args) = ExecutableHelper.buildSpotdlCommand(
