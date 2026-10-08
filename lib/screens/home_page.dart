@@ -38,22 +38,22 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-          body: Container(decoration: BoxDecoration(
-            image: settings.backgroundImage != null
-                ? DecorationImage(
-              image: settings.backgroundImage!,
-              fit: BoxFit.cover,
-            )
-                : null,
-            gradient: settings.backgroundImage == null
-                ? const LinearGradient(
-              colors: [Colors.blue, Colors.purple],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            )
-                : null,
-          ),
-
+          body: Container(
+            decoration: BoxDecoration(
+              image: settings.backgroundImage != null
+                  ? DecorationImage(
+                      image: settings.backgroundImage!,
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+              gradient: settings.backgroundImage == null
+                  ? const LinearGradient(
+                      colors: [Colors.blue, Colors.purple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+            ),
             child: Center(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -100,6 +100,7 @@ class HomePage extends StatelessWidget {
                             );
                           },
                           isDownloading: homeController.isDownloading,
+                          onCancel: homeController.cancelDownload,
                         ),
                       ),
                       const SizedBox(height: 24),

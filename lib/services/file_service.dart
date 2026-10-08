@@ -73,4 +73,28 @@ class FileService {
     final beforeSet = before.toSet();
     return after.where((f) => !beforeSet.contains(f)).toList();
   }
+
+  /// Apaga todo o conteúdo de [dirPath] recursivamente, mantendo o diretório
+  /// raiz. Se o diretório não existir, não faz nada.
+  /// Erros ao deletar itens individuais são logados e o método continua.
+  static Future<void> clearDirectory(String dirPath) async {
+    final dir = Directory(dirPath);
+    if (!await dir.exists()) {
+      return;
+    }
+
+    // Usa listagem não recursiva: cada entrada de nível raiz é deletada com
+    // delete(recursive: true), que remove subdiretórios inteiros. A lista é
+    // materializada antes de deletar para evitar pular entradas ao alterar o
+    // diretório durante a enumeração (problema em algumas plataformas).
+    final entities = await dir.list().toList();
+
+    for (final entity in entities) {
+      try {
+        await entity.delete(recursive: true);
+      } catch (e) {
+        Logger.error("Falha ao deletar ${entity.path}: $e");
+      }
+    }
+  }
 }

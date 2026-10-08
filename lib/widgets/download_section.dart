@@ -6,11 +6,13 @@ class DownloadSection extends StatefulWidget {
   final Function(String link, bool fromYouTube, bool mp3Format,
       String outputDir, bool generateM3u) onDownload;
   final bool isDownloading;
+  final VoidCallback? onCancel;
 
   const DownloadSection({
     super.key,
     required this.onDownload,
     required this.isDownloading,
+    this.onCancel,
   });
 
   @override
@@ -105,7 +107,8 @@ class _DownloadSectionState extends State<DownloadSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Gerar playlist .m3u', style: TextStyle(color: Colors.white)),
+              const Text('Gerar playlist .m3u',
+                  style: TextStyle(color: Colors.white)),
               Switch(
                 value: _generateM3uPlaylist,
                 onChanged: (bool value) {
@@ -151,23 +154,23 @@ class _DownloadSectionState extends State<DownloadSection> {
           onPressed: widget.isDownloading
               ? null
               : () {
-            widget.onDownload(
-              _linkController.text,
-              _fromYouTube,
-              _mp3Format,
-              _outputDir,
-              _generateM3uPlaylist,
-            );
-          },
+                  widget.onDownload(
+                    _linkController.text,
+                    _fromYouTube,
+                    _mp3Format,
+                    _outputDir,
+                    _generateM3uPlaylist,
+                  );
+                },
           icon: widget.isDownloading
               ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          )
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
               : const Icon(Icons.download),
           label: const Text('Baixar'),
           style: ElevatedButton.styleFrom(
@@ -182,10 +185,18 @@ class _DownloadSectionState extends State<DownloadSection> {
 
         const SizedBox(height: 8),
 
+        // 🔹 Botão Cancelar (apenas durante download)
+        if (widget.isDownloading && widget.onCancel != null)
+          TextButton.icon(
+            onPressed: widget.onCancel,
+            icon: const Icon(Icons.stop_circle_outlined, color: Colors.red),
+            label: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+          ),
+
         // 🔹 Tooltip de aviso legal
         Tooltip(
           message:
-          'Antes de baixar uma música, é fundamental verificar a origem da música e os direitos autorais associados para garantir a legalidade do download e evitar problemas. '
+              'Antes de baixar uma música, é fundamental verificar a origem da música e os direitos autorais associados para garantir a legalidade do download e evitar problemas. '
               'Consulte sites de plataformas legais de música, bibliotecas de músicas livres de direitos autorais ou entre em contato direto com os criadores ou detentores dos direitos para obter permissão, se necessário. '
               'O desenvolvedor se isenta da responsabilidade pelos downloads efetuados pelo usuário, uma vez que é aceite o termo de baixar única e exclusivamente músicas que não firam os termos citados acima.',
           padding: const EdgeInsets.all(12.0),

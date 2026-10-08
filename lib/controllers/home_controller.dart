@@ -10,6 +10,10 @@ class HomeController extends ChangeNotifier {
   String _statusMessage = '';
   String? _currentPlaylistName;
 
+  // Serviço de download reutilizado (necessário para cancelamento)
+  late final DownloadService _downloadService =
+      DownloadService(ytDlpTempDir: _ytDlpTempDir);
+
   // Caminhos executáveis
   late final String _ytDlpTempDir;
 
@@ -78,9 +82,7 @@ class HomeController extends ChangeNotifier {
       // garante que a pasta exista
       await FileService().ensureOutputDir(resolvedOutputDir);
 
-      final downloader = DownloadService(ytDlpTempDir: _ytDlpTempDir);
-
-      await downloader.performDownload(
+      await _downloadService.performDownload(
         isYouTube: fromYouTube,
         isMp3: mp3Format,
         link: link,
@@ -93,6 +95,11 @@ class HomeController extends ChangeNotifier {
       _downloadProgress = 0.0;
       _statusMessage = 'Download concluído!';
       notifyListeners();
+    } on DownloadCancelledException {
+      _isDownloading = false;
+      _downloadProgress = 0.0;
+      _statusMessage = 'Download cancelado.';
+      notifyListeners();
     } catch (e) {
       _isDownloading = false;
       _downloadProgress = 0.0;
@@ -100,4 +107,7 @@ class HomeController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Cancela o download em andamento.
+  Future<void> cancelDownload() => _downloadService.cancelActive();
 }
