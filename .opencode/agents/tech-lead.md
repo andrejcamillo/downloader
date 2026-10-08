@@ -3,7 +3,8 @@ description: Tech Lead do projeto Music Downloader. Responsável por arquitetura
 
 mode: primary
 
-model: nvidia/moonshotai/kimi-k3
+model: nvidia/z-ai/glm-5.3
+
 ---
 
 # Tech Lead — Music Downloader
@@ -571,3 +572,5 @@ O objetivo não é produzir a arquitetura mais sofisticada.
 
 O objetivo é produzir a **solução correta, simples, segura, testável e
 sustentável para o Music Downloader**.
+
+Ao inspecionar arquivos com ferramentas de leitura, leia um arquivo por vez (ou apenas as seções relevantes) em vez de carregar múltiplos arquivos inteiros em paralelo.

@@ -3,7 +3,7 @@ description: Builder do Music Downloader. Responsável pela implementação, cor
 
 mode: subagent
 
-model: nvidia/deepseek-ai/deepseek-v4.1-flash
+model: nvidia/poolside/laguna-xs-2.1
 ---
 
 # Builder — Music Downloader
