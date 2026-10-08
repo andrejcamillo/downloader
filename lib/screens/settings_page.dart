@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../controllers/settings_controller.dart';
 import '../services/updater_service.dart';
@@ -67,10 +66,10 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, controller, _) {
         final mp3Label = controller.mp3Dir.isEmpty
             ? 'padrão (downloads/mp3)'
-            : p.basename(controller.mp3Dir);
+            : controller.mp3Dir;
         final mp4Label = controller.mp4Dir.isEmpty
             ? 'padrão (downloads/mp4)'
-            : p.basename(controller.mp4Dir);
+            : controller.mp4Dir;
 
         return Scaffold(
           appBar: AppBar(
@@ -144,25 +143,47 @@ class _SettingsPageState extends State<SettingsPage> {
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   Row(
                     children: [
-                      Tooltip(
-                        message: controller.mp3Dir,
-                        child: Text("MP3: $mp3Label"),
-                      ),
                       IconButton(
                         icon: const Icon(Icons.folder),
                         onPressed: () => controller.pickDirectory("mp3"),
+                      ),
+                      Expanded(
+                        child: Tooltip(
+                          message: mp3Label,
+                          child: Text(
+                            "MP3: $mp3Label",
+                            overflow: TextOverflow.ellipsis,
+                            style: controller.mp3Dir.isEmpty
+                                ? const TextStyle(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   Row(
                     children: [
-                      Tooltip(
-                        message: controller.mp4Dir,
-                        child: Text("MP4: $mp4Label"),
-                      ),
                       IconButton(
                         icon: const Icon(Icons.folder),
                         onPressed: () => controller.pickDirectory("mp4"),
+                      ),
+                      Expanded(
+                        child: Tooltip(
+                          message: mp4Label,
+                          child: Text(
+                            "MP4: $mp4Label",
+                            overflow: TextOverflow.ellipsis,
+                            style: controller.mp4Dir.isEmpty
+                                ? const TextStyle(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
                     ],
                   ),
