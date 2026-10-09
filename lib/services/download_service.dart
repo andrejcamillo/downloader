@@ -49,14 +49,17 @@ class DownloadService {
     _cancelRequested = true;
 
     final process = _activeProcess;
-    if (process == null) return;
-
-    try {
-      process.kill();
-      Logger.info("Processo de download encerrado pelo usuário.");
-    } catch (e) {
-      Logger.warn("Falha ao encerrar o processo de download: $e");
+    if (process != null) {
+      try {
+        process.kill();
+        Logger.info("Processo de download encerrado pelo usuário.");
+      } catch (e) {
+        Logger.warn("Falha ao encerrar o processo de download: $e");
+      }
     }
+
+    // Também cancela downloads HTTP ativos (preparação de executáveis)
+    UpdaterService.cancelActiveDownloads();
   }
 
   /// Decide se a tentativa atual falhou e justifica a recuperação automática
@@ -82,20 +85,24 @@ class DownloadService {
     required bool generateM3u,
     String? playlistName,
   }) async {
-    // Reseta o estado de cancelamento de uma execução anterior e marca o
-    // início do download (inclusive durante a preparação dos executáveis).
-    _cancelRequested = false;
-    _isDownloading = true;
-
     try {
-      if (!await UpdaterService.ensureExecutables(youtube: isYouTube)) {
+      // Reseta o estado de cancelamento de uma execução anterior e marca o
+      // início do download (inclusive durante a preparação dos executáveis).
+      _cancelRequested = false;
+      _isDownloading = true;
+
+      // Usa callback para verificar cancelamento durante a preparação
+      final ok = await UpdaterService.ensureExecutables(
+        youtube: isYouTube,
+        isCancelled: () => _cancelRequested,
+      );
+      if (_cancelRequested) {
+        throw const DownloadCancelledException();
+      }
+      if (!ok) {
         throw Exception(isYouTube
             ? 'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).'
             : 'Falha ao preparar spotdl/ffmpeg (instale Python + pip install spotdl ou verifique a conexão).');
-      }
-
-      if (_cancelRequested) {
-        throw const DownloadCancelledException();
       }
 
       final environmentVars = Map<String, String>.from(Platform.environment);
@@ -226,7 +233,8 @@ class DownloadService {
         bool updated;
         if (isYouTube) {
           Logger.info("Tentando atualizar yt-dlp automaticamente...");
-          updated = await UpdaterService.updateYtDlp();
+          updated = await UpdaterService.updateYtDlp(
+              isCancelled: () => _cancelRequested);
         } else if (spotdlRunner != null &&
             spotdlRunner.$1 != ExecutableHelper.spotdlExe) {
           Logger.info(
@@ -234,7 +242,8 @@ class DownloadService {
           updated = await UpdaterService.updateSpotdlPip();
         } else {
           Logger.info("Tentando atualizar spotDL automaticamente...");
-          updated = await UpdaterService.updateSpotdl();
+          updated = await UpdaterService.updateSpotdl(
+              isCancelled: () => _cancelRequested);
         }
 
         // A atualização é longa: se o usuário cancelou nesse intervalo,

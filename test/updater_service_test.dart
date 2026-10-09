@@ -54,4 +54,36 @@ void main() {
       );
     });
   });
+
+  group('UpdaterService com cancelamento', () {
+    test(
+        'ensureExecutables(youtube: true, isCancelled: () => true) retorna false sem rede',
+        () async {
+      final result = await UpdaterService.ensureExecutables(
+        youtube: true,
+        isCancelled: () => true,
+      );
+
+      // Não deve fazer download se cancelado imediatamente
+      expect(result, isFalse);
+    });
+
+    test(
+        'ensureExecutables(youtube: false, isCancelled: () => true) retorna false',
+        () async {
+      final result = await UpdaterService.ensureExecutables(
+        youtube: false,
+        isCancelled: () => true,
+      );
+
+      expect(result, isFalse);
+    });
+
+    test('updateYtDlp(isCancelled: () => true) retorna false sem rede',
+        () async {
+      final result = await UpdaterService.updateYtDlp(isCancelled: () => true);
+
+      expect(result, isFalse);
+    });
+  });
 }
