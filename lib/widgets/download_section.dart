@@ -3,8 +3,14 @@
 import 'package:flutter/material.dart';
 
 class DownloadSection extends StatefulWidget {
-  final Function(String link, bool fromYouTube, bool mp3Format,
-      String outputDir, bool generateM3u) onDownload;
+  final Function(
+    String link,
+    bool fromYouTube,
+    bool mp3Format,
+    String outputDir,
+    bool generateM3u,
+  )
+  onDownload;
   final bool isDownloading;
   final VoidCallback? onCancel;
 
@@ -107,8 +113,10 @@ class _DownloadSectionState extends State<DownloadSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Gerar playlist .m3u',
-                  style: TextStyle(color: Colors.white)),
+              const Text(
+                'Gerar playlist .m3u',
+                style: TextStyle(color: Colors.white),
+              ),
               Switch(
                 value: _generateM3uPlaylist,
                 onChanged: (bool value) {
@@ -117,7 +125,7 @@ class _DownloadSectionState extends State<DownloadSection> {
                     _saveM3uSetting(); // Salva a preferência
                   });
                 },
-                activeColor: Colors.blue,
+                activeThumbColor: Colors.blue,
               ),
             ],
           ),
@@ -202,17 +210,11 @@ class _DownloadSectionState extends State<DownloadSection> {
           padding: const EdgeInsets.all(12.0),
           preferBelow: false,
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.85),
+            color: Colors.black.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-          ),
-          child: const Icon(
-            Icons.info_outline,
-            color: Colors.white70,
-          ),
+          textStyle: const TextStyle(color: Colors.white, fontSize: 14),
+          child: const Icon(Icons.info_outline, color: Colors.white70),
         ),
       ],
     );

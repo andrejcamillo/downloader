@@ -26,7 +26,7 @@ class StatusSection extends StatelessWidget {
         if (isDownloading) ...[
           LinearProgressIndicator(
             value: progress > 0 ? progress : null,
-            backgroundColor: theme.colorScheme.surfaceVariant,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
           ),
           const SizedBox(height: 12),
@@ -37,7 +37,7 @@ class StatusSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.cardColor.withOpacity(0.9),
+              color: theme.cardColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -63,7 +63,9 @@ class StatusSection extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: statusMessage));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Mensagem copiada para área de transferência"),
+                        content: Text(
+                          "Mensagem copiada para área de transferência",
+                        ),
                         duration: Duration(seconds: 2),
                       ),
                     );
