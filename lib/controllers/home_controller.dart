@@ -1,9 +1,11 @@
+import 'dart:ui' show AppExitResponse;
+
 import 'package:flutter/material.dart';
 import '../services/download_service.dart';
 import '../services/file_service.dart';
 import '../utils/app_paths.dart';
 
-class HomeController extends ChangeNotifier {
+class HomeController extends ChangeNotifier with WidgetsBindingObserver {
   // Estado
   bool _isDownloading = false;
   double _downloadProgress = 0.0;
@@ -11,8 +13,9 @@ class HomeController extends ChangeNotifier {
   String? _currentPlaylistName;
 
   // Serviço de download reutilizado (necessário para cancelamento)
-  late final DownloadService _downloadService =
-      DownloadService(ytDlpTempDir: _ytDlpTempDir);
+  late final DownloadService _downloadService = DownloadService(
+    ytDlpTempDir: _ytDlpTempDir,
+  );
 
   // Caminhos executáveis
   late final String _ytDlpTempDir;
@@ -43,6 +46,15 @@ class HomeController extends ChangeNotifier {
 
     FileService().ensureOutputDir(_defaultMp3Dir);
     FileService().ensureOutputDir(_defaultMp4Dir);
+
+    // Observa o fechamento do app para encerrar downloads ativos.
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   /// Limpa e prepara o link
@@ -117,4 +129,13 @@ class HomeController extends ChangeNotifier {
 
   /// Cancela o download em andamento.
   Future<void> cancelDownload() => _downloadService.cancelActive();
+
+  /// Encerra o download ativo antes de o app sair, evitando processo
+  /// externo órfão (yt-dlp/spotdl/ffmpeg) consumindo CPU/rede após o
+  /// fechamento — especialmente no Windows.
+  @override
+  Future<AppExitResponse> didRequestAppExit() async {
+    await cancelDownload();
+    return AppExitResponse.exit;
+  }
 }
