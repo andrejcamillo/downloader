@@ -34,6 +34,13 @@ class HomeController extends ChangeNotifier {
 
     // Usa FileService para garantir que as pastas existam
     FileService().ensureOutputDir(_ytDlpTempDir);
+
+    // Limpa resíduos de sessões anteriores (crash/fechamento durante
+    // download): sem isso, arquivos órfãos seriam movidos para a pasta
+    // final no próximo download. No início da sessão nada está baixando,
+    // então a limpeza é segura. clearDirectory nunca lança exceção.
+    FileService.clearDirectory(_ytDlpTempDir);
+
     FileService().ensureOutputDir(_defaultMp3Dir);
     FileService().ensureOutputDir(_defaultMp4Dir);
   }
