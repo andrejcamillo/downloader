@@ -80,6 +80,9 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
   }) async {
     if (_isDownloading) return;
 
+    _currentPlaylistName = null;
+    notifyListeners();
+
     final link = sanitizeLink(rawLink);
     if (link.isEmpty) {
       _statusMessage = 'Link inválido';
@@ -108,6 +111,10 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
         finalOutputDir: resolvedOutputDir,
         generateM3u: generateM3u,
         playlistName: _currentPlaylistName,
+        onPlaylistName: (name) {
+          _currentPlaylistName = name;
+          notifyListeners();
+        },
       );
 
       _isDownloading = false;

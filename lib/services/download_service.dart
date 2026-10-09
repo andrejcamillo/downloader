@@ -24,9 +24,7 @@ class DownloadCancelledException implements Exception {
 class DownloadService {
   final String ytDlpTempDir;
 
-  DownloadService({
-    required this.ytDlpTempDir,
-  });
+  DownloadService({required this.ytDlpTempDir});
 
   /// Processo externo em execução no momento, quando houver.
   Process? _activeProcess;
@@ -77,6 +75,17 @@ class DownloadService {
     return exitCode != 0 || spotdlNoFiles;
   }
 
+  /// Extrai o nome da playlist de uma linha de stdout do yt-dlp
+  /// (`[download] Downloading playlist: <nome>`), ou `null` se a linha
+  /// não anunciar uma playlist.
+  @visibleForTesting
+  static String? extractPlaylistName(String line) {
+    final match = RegExp(
+      r'^\[download\] Downloading playlist: (.+)$',
+    ).firstMatch(line.trim());
+    return match?.group(1);
+  }
+
   Future<List<String>> performDownload({
     required bool isYouTube,
     required bool isMp3,
@@ -84,12 +93,16 @@ class DownloadService {
     required String finalOutputDir,
     required bool generateM3u,
     String? playlistName,
+    void Function(String name)? onPlaylistName,
   }) async {
     try {
       // Reseta o estado de cancelamento de uma execução anterior e marca o
       // início do download (inclusive durante a preparação dos executáveis).
       _cancelRequested = false;
       _isDownloading = true;
+
+      // Nome da playlist detectado do stdout do yt-dlp
+      String? detectedPlaylistName;
 
       // Usa callback para verificar cancelamento durante a preparação
       final ok = await UpdaterService.ensureExecutables(
@@ -100,9 +113,11 @@ class DownloadService {
         throw const DownloadCancelledException();
       }
       if (!ok) {
-        throw Exception(isYouTube
-            ? 'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).'
-            : 'Falha ao preparar spotdl/ffmpeg (instale Python + pip install spotdl ou verifique a conexão).');
+        throw Exception(
+          isYouTube
+              ? 'Falha ao preparar yt-dlp/ffmpeg (verifique a conexão).'
+              : 'Falha ao preparar spotdl/ffmpeg (instale Python + pip install spotdl ou verifique a conexão).',
+        );
       }
 
       final environmentVars = Map<String, String>.from(Platform.environment);
@@ -158,6 +173,11 @@ class DownloadService {
 
         process.stdout.transform(const SystemEncoding().decoder).listen((line) {
           Logger.info(line.trim());
+          final name = extractPlaylistName(line);
+          if (name != null && detectedPlaylistName == null) {
+            detectedPlaylistName = name;
+            onPlaylistName?.call(name);
+          }
         });
 
         process.stderr.transform(const SystemEncoding().decoder).listen((line) {
@@ -209,7 +229,7 @@ class DownloadService {
           if (generateM3u && downloadedFiles.isNotEmpty) {
             await PlaylistService.generateM3uFile(
               finalOutputDir,
-              playlistName ?? "Minha Playlist",
+              playlistName ?? detectedPlaylistName ?? "Minha Playlist",
               downloadedFiles,
             );
           }
@@ -227,23 +247,27 @@ class DownloadService {
           Logger.error("Falha no download: exitCode=$exitCode");
         } else {
           Logger.error(
-              "spotdl terminou com exitCode=0 sem baixar nenhuma música nova.");
+            "spotdl terminou com exitCode=0 sem baixar nenhuma música nova.",
+          );
         }
 
         bool updated;
         if (isYouTube) {
           Logger.info("Tentando atualizar yt-dlp automaticamente...");
           updated = await UpdaterService.updateYtDlp(
-              isCancelled: () => _cancelRequested);
+            isCancelled: () => _cancelRequested,
+          );
         } else if (spotdlRunner != null &&
             spotdlRunner.$1 != ExecutableHelper.spotdlExe) {
           Logger.info(
-              "Tentando atualizar spotdl/yt-dlp via pip automaticamente...");
+            "Tentando atualizar spotdl/yt-dlp via pip automaticamente...",
+          );
           updated = await UpdaterService.updateSpotdlPip();
         } else {
           Logger.info("Tentando atualizar spotDL automaticamente...");
           updated = await UpdaterService.updateSpotdl(
-              isCancelled: () => _cancelRequested);
+            isCancelled: () => _cancelRequested,
+          );
         }
 
         // A atualização é longa: se o usuário cancelou nesse intervalo,
@@ -268,7 +292,8 @@ class DownloadService {
       }
 
       throw Exception(
-          "O spotdl terminou sem baixar nenhuma música. Tente atualizar o spotDL nas Configurações ou verifique o log.txt.");
+        "O spotdl terminou sem baixar nenhuma música. Tente atualizar o spotDL nas Configurações ou verifique o log.txt.",
+      );
     } finally {
       _activeProcess = null;
       _isDownloading = false;
