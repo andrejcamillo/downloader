@@ -17,7 +17,9 @@ class FileService {
 
   /// Move os arquivos baixados da pasta temp para a pasta final
   static Future<List<String>> moveFilesFromTempToFinal(
-      String tempDir, String finalDir) async {
+    String tempDir,
+    String finalDir,
+  ) async {
     final tempDirectory = Directory(tempDir);
     final finalDirectory = Directory(finalDir);
 
@@ -38,12 +40,31 @@ class FileService {
       final newPath =
           '${finalDirectory.path}${Platform.pathSeparator}${file.uri.pathSegments.last}';
       try {
-        await file.rename(newPath);
+        try {
+          await file.rename(newPath);
+        } on FileSystemException {
+          // rename é atômico, mas não funciona entre unidades/volumes
+          // diferentes (ex.: temp em C: e destino em E: no Windows; EXDEV
+          // no POSIX). Fallback: copiar e apagar a origem.
+          Logger.info(
+            "rename indisponível para ${file.path} (ex.: unidades/volumes diferentes), usando copiar+remover.",
+          );
+          await file.copy(newPath);
+          await file.delete();
+        }
         movedFiles.add(newPath);
         Logger.info("Arquivo movido: ${file.path} → $newPath");
       } catch (e) {
         Logger.error("Erro ao mover arquivo ${file.path}: $e");
       }
+    }
+
+    // Arquivos existiam, mas nenhum chegou ao destino: sem isso o app
+    // reportaria "Download concluído!" sem entregar nada.
+    if (files.isNotEmpty && movedFiles.isEmpty) {
+      throw Exception(
+        "Falha ao mover os arquivos baixados para a pasta final. Verifique permissões e espaço em disco.",
+      );
     }
 
     return movedFiles;
