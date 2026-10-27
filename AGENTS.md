@@ -302,3 +302,106 @@ Exemplo:
 Domain
 └── repositories
     └── downloader_repository.dart
+```
+
+---
+
+# 10. Data e Infrastructure
+
+A camada Data/Infrastructure encapsula as implementações concretas e integrações externas:
+
+- implementações de Repositories definidas pelo Domain;
+- clientes e adaptadores de processos externos (FFmpeg, yt-dlp);
+- acesso ao sistema de arquivos local e storage;
+- serviços de rede e APIs externas.
+
+### Regras desta camada:
+- Detalhes de processos, comandos e filesystem **não devem vazar** para Presentation ou Domain;
+- Erros de processos externos ou filesystem devem ser mapeados para exceções/resultados tipados e expressivos de domínio;
+- Liberação explícita de recursos e encerramento de processos ao finalizar ou cancelar operações.
+
+---
+
+# 11. Downloads e Processamento de Mídia (yt-dlp e FFmpeg)
+
+Operações de download e processamento de mídia são assíncronas e potencialmente longas.
+
+### Regras essenciais:
+- **Não bloquear a interface**: Toda execução de ferramentas externas deve rodar em background/isolates/streams assíncronas;
+- **Estado real da operação**: Representar de forma confiável e em tempo real os estados de início, progresso, conclusão, erro e cancelamento. Nunca informar conclusão antes do arquivo estar 100% gravado e validado;
+- **Cancelamento e processos órfãos**: Tratar interrupção e cancelamento com o encerramento explícito dos processos filhos (`SIGTERM`/`kill`), evitando deixar processos externos órfãos rodando em segundo plano;
+- **Arquivos temporários e limpeza**: Arquivos parciais e temporários gerados durante o download ou conversão devem ser limpos após conclusão ou falha;
+- **Concorrência e limites de recursos**: Evitar concorrência descontrolada de downloads e conversões simultâneas de FFmpeg/yt-dlp para não exaurir CPU, RAM ou largura de banda;
+- **Metadados e integridade**: Preservar metadados, codecs e integridade dos arquivos conforme solicitado no requisito.
+
+---
+
+# 12. Sistema de Arquivos e Compatibilidade Multiplataforma
+
+O projeto roda em múltiplas plataformas (Windows, Linux, Android):
+
+- **Caminhos seguros e portáveis**: Nunca utilize caminhos absolutos hardcoded ou específicos da máquina de desenvolvimento;
+- **APIs de plataforma**: Utilize `path_provider` ou abstrações de storage apropriadas para a plataforma;
+- **Sanitização de nomes de arquivos**: Sanitize nomes de arquivos removendo caracteres inválidos ou reservados (`/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`);
+- **Permissões e diretórios**: Verifique e crie diretórios de destino se não existirem, tratando falhas de permissão de escrita ou espaço em disco insuficiente;
+- **Mover entre unidades**: Ao mover arquivos entre volumes/drives diferentes, use estratégia com fallback de cópia + deleção quando `rename` falhar.
+
+---
+
+# 13. Segurança e Execução de Comandos
+
+A segurança é prioridade máxima:
+
+- **Proibida concatenação de comandos em shell**: Nunca monte strings de comando concatenando entradas não validadas do usuário (ex: `sh -c "$cmd $url"`). Utilize APIs seguras como `Process.start` ou `Process.run` passando a lista de argumentos como lista de strings (`List<String>`);
+- **Sanitização rigorosa de entradas**: URLs, nomes de pastas e títulos fornecidos pelo usuário ou pela web devem ser validados e sanitizados antes do repasse aos binários externos;
+- **Proteção de credenciais**: Nunca exponha segredos, tokens, cookies de sessão ou credenciais em código, repositório ou logs da aplicação.
+
+---
+
+# 14. Validação e Testes
+
+Antes de concluir qualquer tarefa ou entrega, as ferramentas de validação do projeto devem ser executadas e estar 100% limpas:
+
+```bash
+# Formatação de código
+dart format .
+
+# Análise estática (linter e tipagem)
+flutter analyze
+
+# Suite de testes
+flutter test
+```
+
+### Critérios de teste:
+- Testes unitários para parsers (stdout do yt-dlp, mappers de playlist/m3u, sanitizadores de caminho);
+- Testes de regras de negócio, use cases e ViewModels com controle de concorrência e mocks de infraestrutura;
+- Validar cenários de erro, cancelamento e falha de ferramentas externas;
+- Nenhuma alteração é considerada pronta apenas porque compila.
+
+---
+
+# 15. Agentes e Regras de Desenvolvimento
+
+### Tech Lead
+- Responsável por arquitetura, planejamento técnico, decomposição de tarefas e orientação técnica;
+- Fonte da verdade absoluta: este `AGENTS.md`;
+- Produz plano técnico antes de qualquer alteração significativa, preservando a arquitetura existente.
+
+### Builder e Builder Fallback
+- Responsáveis pela implementação de código, testes e validação;
+- Seguem estritamente as decisões do `AGENTS.md` e o plano do Tech Lead;
+- Em caso de indisponibilidade ou falha do Builder principal, o **Builder Fallback** assume a tarefa a partir do estado atual sem reiniciar do zero;
+- Respeitam rigorosamente as regras de segurança, execução de processos externos (`Process.start` com `List<String>`), cancelamento de subprocessos e limpeza de temporários;
+- Validação mandatória: `dart format .`, `flutter analyze` sem advertências e `flutter test` com todos os testes passando.
+
+### Reviewer
+- Auditoria técnica independente, crítica e rigorosa;
+- **NÃO modifica arquivos, NÃO commita e NÃO corrige código**;
+- Checklist prioritário:
+  1. **Segurança**: Comandos de sistema construídos de forma insegura, injeção de argumentos, credenciais/cookies vazando em logs;
+  2. **Processos e Recursos**: Processos órfãos de yt-dlp/ffmpeg após fechamento/cancelamento, falta de limpeza de arquivos temporários, concorrência descontrolada;
+  3. **Arquitetura e Contratos**: Camadas respeitadas (`Presentation` → `Domain` → `Data`), UI sem acoplamento a binários externos;
+  4. **Multiplataforma**: Caminhos inválidos em Windows/Linux, rename entre diferentes drives;
+  5. **Qualidade e Testes**: `flutter analyze` limpo e cobertura adequada de testes para casos de sucesso e erro;
+- Emite relatório com severidades (`CRÍTICO`, `ALTO`, `MÉDIO`, `BAIXO`) e veredito final (`APROVADO`, `APROVADO COM OBSERVAÇÕES`, `REQUER CORREÇÕES`, `BLOQUEADO`).
