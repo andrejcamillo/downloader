@@ -19,27 +19,29 @@ void main() {
       }
     });
 
-    test('gera .m3u com nome sanitizado e conteúdo relativo (basename)',
-        () async {
-      final songs = [
-        p.join(tempDir.path, 'musica1.mp3'),
-        p.join(tempDir.path, 'musica2.mp3'),
-      ];
+    test(
+      'gera .m3u com nome sanitizado e conteúdo relativo (basename)',
+      () async {
+        final songs = [
+          p.join(tempDir.path, 'musica1.mp3'),
+          p.join(tempDir.path, 'musica2.mp3'),
+        ];
 
-      await PlaylistService.generateM3uFile(
-        tempDir.path,
-        r'Minha/Play:list*?"<>|',
-        songs,
-      );
+        await PlaylistService.generateM3uFile(
+          tempDir.path,
+          r'Minha/Play:list*?"<>|',
+          songs,
+        );
 
-      final m3uFile = File(p.join(tempDir.path, 'Minha_Play_list______.m3u'));
+        final m3uFile = File(p.join(tempDir.path, 'Minha_Play_list______.m3u'));
 
-      expect(await m3uFile.exists(), isTrue);
+        expect(await m3uFile.exists(), isTrue);
 
-      final content = await m3uFile.readAsLines();
-      expect(content.first, '#EXTM3U');
-      expect(content.skip(1).toList(), songs.map(p.basename).toList());
-    });
+        final content = await m3uFile.readAsLines();
+        expect(content.first, '#EXTM3U');
+        expect(content.skip(1).toList(), songs.map(p.basename).toList());
+      },
+    );
 
     test('não gera arquivo quando a lista de músicas está vazia', () async {
       await PlaylistService.generateM3uFile(tempDir.path, 'Vazia', const []);

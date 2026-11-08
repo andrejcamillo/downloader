@@ -88,8 +88,7 @@ void main() {
         tempDir: tempDir,
       );
 
-      final expectedTemplate =
-          p.join(tempDir, '%(title)s.%(ext)s');
+      final expectedTemplate = p.join(tempDir, '%(title)s.%(ext)s');
 
       expect(mp3Args[mp3Args.indexOf('--output') + 1], expectedTemplate);
       expect(mp4Args[mp4Args.indexOf('--output') + 1], expectedTemplate);
@@ -116,33 +115,37 @@ void main() {
       expect(args.contains('--simple-tui'), isTrue);
     });
 
-    test('com runner de python embutido customizado usa o caminho informado',
-        () {
-      const embedded = r'C:\App\bin\python\python.exe';
+    test(
+      'com runner de python embutido customizado usa o caminho informado',
+      () {
+        const embedded = r'C:\App\bin\python\python.exe';
 
-      final (command, args) = ExecutableHelper.buildSpotdlCommand(
-        runner: (embedded, const ['-m', 'spotdl']),
-        link: link,
-        finalOutputDir: outputDir,
-      );
+        final (command, args) = ExecutableHelper.buildSpotdlCommand(
+          runner: (embedded, const ['-m', 'spotdl']),
+          link: link,
+          finalOutputDir: outputDir,
+        );
 
-      expect(command, embedded);
-      expect(args.take(3).toList(), ['-m', 'spotdl', 'download']);
-      expect(args[3], link);
-    });
+        expect(command, embedded);
+        expect(args.take(3).toList(), ['-m', 'spotdl', 'download']);
+        expect(args[3], link);
+      },
+    );
 
-    test('com runner exe usa o caminho do spotdl e args começam com download',
-        () {
-      final (command, args) = ExecutableHelper.buildSpotdlCommand(
-        runner: (AppPaths.spotdlExe, const []),
-        link: link,
-        finalOutputDir: outputDir,
-      );
+    test(
+      'com runner exe usa o caminho do spotdl e args começam com download',
+      () {
+        final (command, args) = ExecutableHelper.buildSpotdlCommand(
+          runner: (AppPaths.spotdlExe, const []),
+          link: link,
+          finalOutputDir: outputDir,
+        );
 
-      expect(command, AppPaths.spotdlExe);
-      expect(args.first, 'download');
-      expect(args[1], link);
-    });
+        expect(command, AppPaths.spotdlExe);
+        expect(args.first, 'download');
+        expect(args[1], link);
+      },
+    );
   });
 }
 

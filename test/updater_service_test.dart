@@ -9,28 +9,19 @@ void main() {
     test('retorna false dentro do prazo padrão de 7 dias', () {
       final lastModified = now.subtract(const Duration(days: 3));
 
-      expect(
-        UpdaterService.shouldUpdateYtDlp(lastModified, now),
-        isFalse,
-      );
+      expect(UpdaterService.shouldUpdateYtDlp(lastModified, now), isFalse);
     });
 
     test('retorna true fora do prazo padrão de 7 dias', () {
       final lastModified = now.subtract(const Duration(days: 8));
 
-      expect(
-        UpdaterService.shouldUpdateYtDlp(lastModified, now),
-        isTrue,
-      );
+      expect(UpdaterService.shouldUpdateYtDlp(lastModified, now), isTrue);
     });
 
     test('retorna false exatamente com 7 dias', () {
       final lastModified = now.subtract(const Duration(days: 7));
 
-      expect(
-        UpdaterService.shouldUpdateYtDlp(lastModified, now),
-        isFalse,
-      );
+      expect(UpdaterService.shouldUpdateYtDlp(lastModified, now), isFalse);
     });
 
     test('respeita maxAge customizado', () {
@@ -57,33 +48,39 @@ void main() {
 
   group('UpdaterService com cancelamento', () {
     test(
-        'ensureExecutables(youtube: true, isCancelled: () => true) retorna false sem rede',
-        () async {
-      final result = await UpdaterService.ensureExecutables(
-        youtube: true,
-        isCancelled: () => true,
-      );
+      'ensureExecutables(youtube: true, isCancelled: () => true) retorna false sem rede',
+      () async {
+        final result = await UpdaterService.ensureExecutables(
+          youtube: true,
+          isCancelled: () => true,
+        );
 
-      // Não deve fazer download se cancelado imediatamente
-      expect(result, isFalse);
-    });
+        // Não deve fazer download se cancelado imediatamente
+        expect(result, isFalse);
+      },
+    );
 
     test(
-        'ensureExecutables(youtube: false, isCancelled: () => true) retorna false',
-        () async {
-      final result = await UpdaterService.ensureExecutables(
-        youtube: false,
-        isCancelled: () => true,
-      );
+      'ensureExecutables(youtube: false, isCancelled: () => true) retorna false',
+      () async {
+        final result = await UpdaterService.ensureExecutables(
+          youtube: false,
+          isCancelled: () => true,
+        );
 
-      expect(result, isFalse);
-    });
+        expect(result, isFalse);
+      },
+    );
 
-    test('updateYtDlp(isCancelled: () => true) retorna false sem rede',
-        () async {
-      final result = await UpdaterService.updateYtDlp(isCancelled: () => true);
+    test(
+      'updateYtDlp(isCancelled: () => true) retorna false sem rede',
+      () async {
+        final result = await UpdaterService.updateYtDlp(
+          isCancelled: () => true,
+        );
 
-      expect(result, isFalse);
-    });
+        expect(result, isFalse);
+      },
+    );
   });
 }

@@ -16,7 +16,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String _status = "";
 
   Future<void> _updateExecutable(
-      Future<bool> Function() updater, String name) async {
+    Future<bool> Function() updater,
+    String name,
+  ) async {
     setState(() {
       _loading = true;
       _status = "Atualizando $name...";
@@ -94,15 +96,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 🔹 Tema
-                  const Text("Tema",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Tema",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   Row(
                     children: [
                       Tooltip(
                         message: "Claro",
                         child: IconButton(
-                          icon: const Icon(Icons.light_mode, color: Colors.amber),
+                          icon: const Icon(
+                            Icons.light_mode,
+                            color: Colors.amber,
+                          ),
                           onPressed: () =>
                               controller.changeTheme(ThemeMode.light),
                           color: controller.themeMode == ThemeMode.light
@@ -113,8 +119,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       Tooltip(
                         message: "Escuro",
                         child: IconButton(
-                          icon: const Icon(Icons.dark_mode,
-                              color: Colors.deepPurple),
+                          icon: const Icon(
+                            Icons.dark_mode,
+                            color: Colors.deepPurple,
+                          ),
                           onPressed: () =>
                               controller.changeTheme(ThemeMode.dark),
                           color: controller.themeMode == ThemeMode.dark
@@ -125,7 +133,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       Tooltip(
                         message: "Sistema",
                         child: IconButton(
-                          icon: const Icon(Icons.phone_android, color: Colors.blue),
+                          icon: const Icon(
+                            Icons.phone_android,
+                            color: Colors.blue,
+                          ),
                           onPressed: () =>
                               controller.changeTheme(ThemeMode.system),
                           color: controller.themeMode == ThemeMode.system
@@ -138,9 +149,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Divider(),
 
                   // 🔹 Diretórios
-                  const Text("Diretórios de downloads",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Diretórios de downloads",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   Row(
                     children: [
                       IconButton(
@@ -190,9 +202,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Divider(),
 
                   // 🔹 Plano de fundo
-                  const Text("Plano de Fundo",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Plano de Fundo",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Usar fundo personalizado"),
@@ -222,33 +235,45 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Divider(),
 
                   // 🔹 Botões de atualização
-                  const Text("Atualizações",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Atualizações",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   Row(
                     children: [
                       Tooltip(
                         message: "Atualizar YouTube (yt-dlp)",
                         child: IconButton(
-                          icon:
-                          const Icon(Icons.video_library, color: Colors.red),
+                          icon: const Icon(
+                            Icons.video_library,
+                            color: Colors.red,
+                          ),
                           onPressed: () => _updateExecutable(
-                              UpdaterService.updateYtDlp, "yt-dlp"),
+                            UpdaterService.updateYtDlp,
+                            "yt-dlp",
+                          ),
                         ),
                       ),
                       Tooltip(
                         message: "Atualizar Spotify (spotDL)",
                         child: IconButton(
-                          icon: const Icon(Icons.music_note, color: Colors.green),
+                          icon: const Icon(
+                            Icons.music_note,
+                            color: Colors.green,
+                          ),
                           onPressed: () => _updateExecutable(
-                              UpdaterService.updateSpotdl, "spotDL"),
+                            UpdaterService.updateSpotdl,
+                            "spotDL",
+                          ),
                         ),
                       ),
                       Tooltip(
                         message: "Atualizar todos (inclui ffmpeg)",
                         child: IconButton(
-                          icon: const Icon(Icons.system_update,
-                              color: Colors.blue),
+                          icon: const Icon(
+                            Icons.system_update,
+                            color: Colors.blue,
+                          ),
                           onPressed: _updateAll,
                         ),
                       ),
@@ -275,9 +300,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       icon: const Icon(Icons.restore),
                       label: const Text("Resetar configurações"),

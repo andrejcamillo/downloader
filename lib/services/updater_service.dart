@@ -20,8 +20,12 @@ class UpdaterService {
     const url =
         "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe";
     final filePath = p.join(binDir, "yt-dlp.exe");
-    return await _downloadFile(url, filePath, "yt-dlp",
-        isCancelled: isCancelled);
+    return await _downloadFile(
+      url,
+      filePath,
+      "yt-dlp",
+      isCancelled: isCancelled,
+    );
   }
 
   /// Atualiza o spotDL (pega última release via API)
@@ -47,15 +51,20 @@ class UpdaterService {
         if (asset != null) {
           final downloadUrl = asset["browser_download_url"];
           final filePath = p.join(binDir, "spotdl.exe");
-          return await _downloadFile(downloadUrl, filePath, "spotDL",
-              isCancelled: isCancelled);
+          return await _downloadFile(
+            downloadUrl,
+            filePath,
+            "spotDL",
+            isCancelled: isCancelled,
+          );
         } else {
           Logger.error("Nenhum executável encontrado na release do spotDL.");
           return false;
         }
       } else {
         Logger.error(
-            "Falha ao consultar releases do spotDL: ${response.statusCode}");
+          "Falha ao consultar releases do spotDL: ${response.statusCode}",
+        );
         return false;
       }
     } catch (e) {
@@ -74,10 +83,15 @@ class UpdaterService {
 
     Logger.info('Atualizando spotdl/yt-dlp via pip...');
     try {
-      final result = await Process.run(
-        runner.$1,
-        ['-m', 'pip', 'install', '--user', '--upgrade', 'spotdl', 'yt-dlp'],
-      );
+      final result = await Process.run(runner.$1, [
+        '-m',
+        'pip',
+        'install',
+        '--user',
+        '--upgrade',
+        'spotdl',
+        'yt-dlp',
+      ]);
       if (result.exitCode == 0) {
         ExecutableHelper.resetSpotdlRunnerCache();
         Logger.info('spotdl/yt-dlp atualizados via pip.');
@@ -110,8 +124,12 @@ class UpdaterService {
 
     try {
       Logger.info("Baixando ffmpeg...");
-      final downloaded =
-          await _downloadFile(url, zipPath, "ffmpeg", isCancelled: isCancelled);
+      final downloaded = await _downloadFile(
+        url,
+        zipPath,
+        "ffmpeg",
+        isCancelled: isCancelled,
+      );
       if (!downloaded) return false;
 
       Logger.info("Extraindo ffmpeg...");
@@ -175,8 +193,7 @@ class UpdaterService {
     DateTime lastModified,
     DateTime now, {
     Duration maxAge = const Duration(days: 7),
-  }) =>
-      now.difference(lastModified) > maxAge;
+  }) => now.difference(lastModified) > maxAge;
 
   /// Cliente HTTP ativo, guardado para permitir cancelamento via
   /// [cancelActiveDownloads].
@@ -191,8 +208,10 @@ class UpdaterService {
   ///
   /// Para YouTube, requer yt-dlp + ffmpeg. Para Spotify, requer ffmpeg +
   /// spotdl (preferindo a instalação via pip, com fallback para o exe).
-  static Future<bool> ensureExecutables(
-      {required bool youtube, bool Function()? isCancelled}) async {
+  static Future<bool> ensureExecutables({
+    required bool youtube,
+    bool Function()? isCancelled,
+  }) async {
     if (isCancelled?.call() ?? false) {
       Logger.info("Preparação de executáveis cancelada.");
       return false;
@@ -207,11 +226,14 @@ class UpdaterService {
       } else {
         bool needsUpdate;
         try {
-          needsUpdate =
-              shouldUpdateYtDlp(ytDlpFile.lastModifiedSync(), DateTime.now());
+          needsUpdate = shouldUpdateYtDlp(
+            ytDlpFile.lastModifiedSync(),
+            DateTime.now(),
+          );
         } catch (e) {
           Logger.warn(
-              "Não foi possível ler a data do yt-dlp ($e). Atualizando por precaução.");
+            "Não foi possível ler a data do yt-dlp ($e). Atualizando por precaução.",
+          );
           needsUpdate = true;
         }
 
@@ -221,13 +243,15 @@ class UpdaterService {
             return false;
           }
           Logger.info(
-              "yt-dlp com mais de 7 dias. Atualizando proativamente...");
+            "yt-dlp com mais de 7 dias. Atualizando proativamente...",
+          );
           final updated = await updateYtDlp(isCancelled: isCancelled);
           if (!updated) {
             // O exe antigo continua disponível; o retry de falha do
             // DownloadService ainda protege contra 403.
             Logger.warn(
-                "Falha ao atualizar yt-dlp proativamente. Prosseguindo com o existente.");
+              "Falha ao atualizar yt-dlp proativamente. Prosseguindo com o existente.",
+            );
           }
         }
       }
@@ -248,8 +272,10 @@ class UpdaterService {
       final ffmpegOk = File(AppPaths.ffmpegExe).existsSync();
 
       if (!ytDlpOk || !ffmpegOk) {
-        Logger.error("Executáveis ausentes após tentativa de download "
-            "(yt-dlp: $ytDlpOk, ffmpeg: $ffmpegOk).");
+        Logger.error(
+          "Executáveis ausentes após tentativa de download "
+          "(yt-dlp: $ytDlpOk, ffmpeg: $ffmpegOk).",
+        );
         return false;
       }
 
@@ -288,8 +314,9 @@ class UpdaterService {
 
     if (!spotdlOk || !ffmpegOk) {
       Logger.error(
-          "Não foi possível preparar o spotdl/ffmpeg. Instale Python e rode "
-          "'pip install spotdl' ou verifique a conexão.");
+        "Não foi possível preparar o spotdl/ffmpeg. Instale Python e rode "
+        "'pip install spotdl' ou verifique a conexão.",
+      );
       return false;
     }
 
@@ -305,8 +332,12 @@ class UpdaterService {
   }
 
   /// Função auxiliar para download com suporte a cancelamento.
-  static Future<bool> _downloadFile(String url, String filePath, String name,
-      {bool Function()? isCancelled}) async {
+  static Future<bool> _downloadFile(
+    String url,
+    String filePath,
+    String name, {
+    bool Function()? isCancelled,
+  }) async {
     if (isCancelled?.call() ?? false) {
       Logger.info("Preparação de executáveis cancelada.");
       return false;

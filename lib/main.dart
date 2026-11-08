@@ -13,7 +13,7 @@ Future<void> main() async {
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowMinSize(const Size(500, 800)); // Tamanho mínimo
-    setWindowMaxSize(Size.infinite);        // Permite maximizar
+    setWindowMaxSize(Size.infinite); // Permite maximizar
   }
 
   // 🔹 Inicializa o SettingsController antes do app

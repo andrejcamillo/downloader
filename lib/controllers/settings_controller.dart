@@ -44,7 +44,9 @@ class SettingsController extends ChangeNotifier {
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     final themeIndex = prefs.getInt('themeMode');
-    _themeMode = themeIndex != null ? ThemeMode.values[themeIndex] : ThemeMode.system;
+    _themeMode = themeIndex != null
+        ? ThemeMode.values[themeIndex]
+        : ThemeMode.system;
 
     _mp3Dir = prefs.getString('mp3Dir') ?? '';
     _mp4Dir = prefs.getString('mp4Dir') ?? '';

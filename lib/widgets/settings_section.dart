@@ -74,18 +74,17 @@ class SettingsSection extends StatelessWidget {
         const SizedBox(height: 16),
 
         // 🔹 Diretórios mais enxutos
-        const Text("Diretórios de downloads",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          "Diretórios de downloads",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         Row(
           children: [
             Tooltip(
               message: mp3Dir,
               child: Text("MP3: ${mp3Dir.split('\\').last}"),
             ),
-            IconButton(
-              icon: const Icon(Icons.folder),
-              onPressed: onPickMp3Dir,
-            ),
+            IconButton(icon: const Icon(Icons.folder), onPressed: onPickMp3Dir),
           ],
         ),
         Row(
@@ -94,17 +93,16 @@ class SettingsSection extends StatelessWidget {
               message: mp4Dir,
               child: Text("MP4: ${mp4Dir.split('\\').last}"),
             ),
-            IconButton(
-              icon: const Icon(Icons.folder),
-              onPressed: onPickMp4Dir,
-            ),
+            IconButton(icon: const Icon(Icons.folder), onPressed: onPickMp4Dir),
           ],
         ),
         const SizedBox(height: 16),
 
         // 🔹 Plano de fundo
-        const Text("Plano de Fundo",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          "Plano de Fundo",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         SwitchListTile(
           title: const Text("Usar fundo personalizado"),
           value: useCustomBackground,
@@ -168,9 +166,7 @@ class SettingsSection extends StatelessWidget {
 
         // 🔹 Resetar configurações
         ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
           icon: const Icon(Icons.restore),
           label: const Text("Resetar configurações"),
           onPressed: onResetSettings,

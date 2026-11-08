@@ -25,11 +25,15 @@ class ExecutableHelper {
     final embedded = AppPaths.embeddedPythonExe;
     if (File(embedded).existsSync()) {
       try {
-        final result =
-            await Process.run(embedded, ['-m', 'spotdl', '--version']);
+        final result = await Process.run(embedded, [
+          '-m',
+          'spotdl',
+          '--version',
+        ]);
         if (result.exitCode == 0) {
           Logger.info(
-              'spotdl via python embutido detectado: ${result.stdout}'.trim());
+            'spotdl via python embutido detectado: ${result.stdout}'.trim(),
+          );
           return (embedded, ['-m', 'spotdl']);
         }
       } catch (_) {
@@ -39,8 +43,7 @@ class ExecutableHelper {
 
     // 2) Python do sistema (instalação via pip).
     try {
-      final result =
-          await Process.run('python', ['-m', 'spotdl', '--version']);
+      final result = await Process.run('python', ['-m', 'spotdl', '--version']);
       if (result.exitCode == 0) {
         Logger.info('spotdl via pip detectado: ${result.stdout}'.trim());
         return ('python', ['-m', 'spotdl']);
@@ -55,83 +58,82 @@ class ExecutableHelper {
 
   /// yt-dlp → retorna comando + args corretos
   static (String, List<String>) buildYtDlpCommand({
-  required bool isMp3,
-  required String link,
-  required String tempDir,
+    required bool isMp3,
+    required String link,
+    required String tempDir,
   }) {
-  final outputTemplate =
-  '$tempDir${Platform.pathSeparator}%(title)s.%(ext)s';
+    final outputTemplate = '$tempDir${Platform.pathSeparator}%(title)s.%(ext)s';
 
-  final args = isMp3
-  ? [
-  '--extract-audio',
-  '--audio-format',
-  'mp3',
-  '--audio-quality',
-  '0',
-  '--add-metadata',
-  '--embed-thumbnail',
-  '--ffmpeg-location',
-  AppPaths.binDir,
-  '--output',
-  outputTemplate,
-  '--windows-filenames',
-  '--ignore-errors',
-  '--no-part',
-  '--retries',
-  '10',
-  '--fragment-retries',
-  '10',
-  '--retry-sleep',
-  '5',
-  link,
-  ]
-      : [
-  '-f',
-  'best[ext=mp4]',
-  '--ffmpeg-location',
-  AppPaths.binDir,
-  '--output',
-  outputTemplate,
-  '--windows-filenames',
-  '--ignore-errors',
-  '--no-part',
-  '--retries',
-  '10',
-  '--fragment-retries',
-  '10',
-  '--retry-sleep',
-  '5',
-  link,
-  ];
+    final args = isMp3
+        ? [
+            '--extract-audio',
+            '--audio-format',
+            'mp3',
+            '--audio-quality',
+            '0',
+            '--add-metadata',
+            '--embed-thumbnail',
+            '--ffmpeg-location',
+            AppPaths.binDir,
+            '--output',
+            outputTemplate,
+            '--windows-filenames',
+            '--ignore-errors',
+            '--no-part',
+            '--retries',
+            '10',
+            '--fragment-retries',
+            '10',
+            '--retry-sleep',
+            '5',
+            link,
+          ]
+        : [
+            '-f',
+            'best[ext=mp4]',
+            '--ffmpeg-location',
+            AppPaths.binDir,
+            '--output',
+            outputTemplate,
+            '--windows-filenames',
+            '--ignore-errors',
+            '--no-part',
+            '--retries',
+            '10',
+            '--fragment-retries',
+            '10',
+            '--retry-sleep',
+            '5',
+            link,
+          ];
 
-  return (ytDlpExe, args);
+    return (ytDlpExe, args);
   }
 
   /// spotdl → retorna comando + args corretos
   static (String, List<String>) buildSpotdlCommand({
-  required (String, List<String>) runner,
-  required String link,
-  required String finalOutputDir,
+    required (String, List<String>) runner,
+    required String link,
+    required String finalOutputDir,
   }) {
-  final args = [
-  ...runner.$2,
-  'download',
-  link,
-  '--ffmpeg',
-  ffmpegExe,
-  '--output',
-  finalOutputDir,
-  '--log-level',
-  'INFO',
-  '--overwrite',
-  'force',
-  '--no-cache',
-  '--simple-tui',
-  '--bitrate',
-  '192k',
-  ];
+    final args = [
+      ...runner.$2,
+      'download',
+      link,
+      '--ffmpeg',
+      ffmpegExe,
+      '--output',
+      finalOutputDir,
+      '--log-level',
+      'INFO',
+      '--overwrite',
+      'force',
+      '--no-cache',
+      '--simple-tui',
+      '--bitrate',
+      '192k',
+    ];
 
-  return (runner.$1, args);
+    return (runner.$1, args);
   }
 }

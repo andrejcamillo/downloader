@@ -19,8 +19,7 @@ class AppPaths {
     final binFromExe = p.join(exeDir, 'bin');
     final ytDlpFromExe = p.join(binFromExe, 'yt-dlp.exe');
 
-    if (File(ytDlpFromExe).existsSync() ||
-        Directory(binFromExe).existsSync()) {
+    if (File(ytDlpFromExe).existsSync() || Directory(binFromExe).existsSync()) {
       return exeDir;
     }
 
