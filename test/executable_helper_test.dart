@@ -113,6 +113,12 @@ void main() {
       expect(_valueOf(args, '--output'), outputDir);
       expect(_valueOf(args, '--log-level'), 'INFO');
       expect(args.contains('--simple-tui'), isTrue);
+      // Novos providers de áudio com fallback
+      expect(args.contains('--audio'), isTrue);
+      final audioIndex = args.indexOf('--audio');
+      expect(args[audioIndex + 1], 'youtube-music');
+      expect(args[audioIndex + 2], 'youtube');
+      expect(args[audioIndex + 3], 'soundcloud');
     });
 
     test(
@@ -129,6 +135,12 @@ void main() {
         expect(command, embedded);
         expect(args.take(3).toList(), ['-m', 'spotdl', 'download']);
         expect(args[3], link);
+        // Novos providers de áudio com fallback
+        expect(args.contains('--audio'), isTrue);
+        final audioIndex = args.indexOf('--audio');
+        expect(args[audioIndex + 1], 'youtube-music');
+        expect(args[audioIndex + 2], 'youtube');
+        expect(args[audioIndex + 3], 'soundcloud');
       },
     );
 
@@ -144,6 +156,12 @@ void main() {
         expect(command, AppPaths.spotdlExe);
         expect(args.first, 'download');
         expect(args[1], link);
+        // Novos providers de áudio com fallback
+        expect(args.contains('--audio'), isTrue);
+        final audioIndex = args.indexOf('--audio');
+        expect(args[audioIndex + 1], 'youtube-music');
+        expect(args[audioIndex + 2], 'youtube');
+        expect(args[audioIndex + 3], 'soundcloud');
       },
     );
   });

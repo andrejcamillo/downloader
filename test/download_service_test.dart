@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:downloader/services/download_service.dart';
 
@@ -128,5 +130,89 @@ void main() {
     test('retorna null para linha vazia', () {
       expect(DownloadService.extractPlaylistName(''), isNull);
     });
+  });
+
+  group('DownloadService.decodeProcessOutput', () {
+    test(
+      'decodifica UTF-8 com acentos mesmo quando chunks dividem multibyte',
+      () async {
+        const input = 'Músicas de Natal — ção\nSegunda linha';
+        final bytes = utf8.encode(input);
+
+        // Divide no meio da sequência multibyte do 'ú' (0xC3 0xBA)
+        // 'M' 'ú' = 0x4D 0xC3 0xBA ... dividindo após 0xC3
+        final chunk1 = bytes.sublist(0, 2); // 'M' + primeiro byte de 'ú'
+        final chunk2 = bytes.sublist(2); // resto
+
+        final stream = Stream<List<int>>.fromIterable([chunk1, chunk2]);
+        final result = await DownloadService.decodeProcessOutput(
+          stream,
+        ).toList();
+
+        expect(result, ['Músicas de Natal — ção', 'Segunda linha']);
+      },
+    );
+
+    test(
+      'tolera bytes inválidos substituindo por U+FFFD sem lançar exceção',
+      () async {
+        // 0xFF é byte inválido em UTF-8
+        final bytes = <int>[
+          0x4D,
+          0xFF,
+          0x75,
+          0x73,
+          0x69,
+          0x63,
+          0x61,
+          0x0A,
+        ]; // M<inválido>usica\n
+
+        final stream = Stream<List<int>>.fromIterable([bytes]);
+        final result = await DownloadService.decodeProcessOutput(
+          stream,
+        ).toList();
+
+        expect(result.length, 1);
+        expect(result[0], contains('\uFFFD')); // caractere de substituição
+        expect(result[0], endsWith('usica'));
+      },
+    );
+
+    test(
+      'separa múltiplas linhas com LF e CRLF sem incluir terminadores',
+      () async {
+        const input = 'Linha 1\nLinha 2\r\nLinha 3\n';
+        final bytes = utf8.encode(input);
+
+        // Envia em chunks arbitrários
+        final chunk1 = bytes.sublist(0, 8);
+        final chunk2 = bytes.sublist(8, 16);
+        final chunk3 = bytes.sublist(16);
+
+        final stream = Stream<List<int>>.fromIterable([chunk1, chunk2, chunk3]);
+        final result = await DownloadService.decodeProcessOutput(
+          stream,
+        ).toList();
+
+        expect(result, ['Linha 1', 'Linha 2', 'Linha 3']);
+      },
+    );
+
+    test(
+      'não produz linha vazia ao final quando input termina com newline',
+      () async {
+        const input = 'Linha 1\nLinha 2\n';
+        final bytes = utf8.encode(input);
+
+        final stream = Stream<List<int>>.fromIterable([bytes]);
+        final result = await DownloadService.decodeProcessOutput(
+          stream,
+        ).toList();
+
+        expect(result, ['Linha 1', 'Linha 2']);
+        expect(result.length, 2);
+      },
+    );
   });
 }

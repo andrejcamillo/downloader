@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -86,6 +87,15 @@ class DownloadService {
     return match?.group(1);
   }
 
+  /// Decodifica stdout/stderr de processos externos (UTF-8 forçado via
+  /// PYTHONIOENCODING) em linhas completas, tolerando bytes inválidos.
+  @visibleForTesting
+  static Stream<String> decodeProcessOutput(Stream<List<int>> raw) {
+    return raw
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .transform(const LineSplitter());
+  }
+
   Future<List<String>> performDownload({
     required bool isYouTube,
     required bool isMp3,
@@ -171,7 +181,7 @@ class DownloadService {
         );
         _activeProcess = process;
 
-        process.stdout.transform(const SystemEncoding().decoder).listen((line) {
+        decodeProcessOutput(process.stdout).listen((line) {
           Logger.info(line.trim());
           final name = extractPlaylistName(line);
           if (name != null && detectedPlaylistName == null) {
@@ -180,7 +190,7 @@ class DownloadService {
           }
         });
 
-        process.stderr.transform(const SystemEncoding().decoder).listen((line) {
+        decodeProcessOutput(process.stderr).listen((line) {
           Logger.error(line.trim());
         });
 
