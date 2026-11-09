@@ -45,6 +45,9 @@ VersionInfoProductTextVersion={#MyAppVersion}
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
+; Ícone do instalador — mesmo ícone do app
+SetupIconFile=windows\runner\resources\app_icon.ico
+
 ; Instalação por usuário, sem admin — OBRIGATÓRIO: o app grava log.txt,
 ; downloads/ e temp_downloads/ ao lado do exe; Program Files quebraria
 ; para usuário comum (sem permissão de escrita).
