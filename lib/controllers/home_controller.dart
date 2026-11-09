@@ -11,6 +11,7 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
   double _downloadProgress = 0.0;
   String _statusMessage = '';
   String? _currentPlaylistName;
+  final List<String> _failedTracks = [];
 
   // Serviço de download reutilizado (necessário para cancelamento)
   late final DownloadService _downloadService = DownloadService(
@@ -29,6 +30,9 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
   double get progress => _downloadProgress;
   String get status => _statusMessage;
   String? get playlistName => _currentPlaylistName;
+
+  /// Lista de faixas que não foram encontradas durante o download.
+  List<String> get failedTracks => _failedTracks;
 
   HomeController() {
     _ytDlpTempDir = AppPaths.tempDir;
@@ -81,6 +85,7 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
     if (_isDownloading) return;
 
     _currentPlaylistName = null;
+    _failedTracks.clear();
     notifyListeners();
 
     final link = sanitizeLink(rawLink);
@@ -115,11 +120,22 @@ class HomeController extends ChangeNotifier with WidgetsBindingObserver {
           _currentPlaylistName = name;
           notifyListeners();
         },
+        onTrackNotFound: (track) {
+          if (!_failedTracks.contains(track)) {
+            _failedTracks.add(track);
+          }
+        },
       );
 
       _isDownloading = false;
       _downloadProgress = 0.0;
-      _statusMessage = 'Download concluído!';
+      if (_failedTracks.isNotEmpty) {
+        _statusMessage =
+            'Download concluído! ${_failedTracks.length} '
+            '${_failedTracks.length == 1 ? "faixa não encontrada" : "faixas não encontradas"}';
+      } else {
+        _statusMessage = 'Download concluído!';
+      }
       notifyListeners();
     } on DownloadCancelledException {
       _isDownloading = false;

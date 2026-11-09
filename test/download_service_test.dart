@@ -132,6 +132,55 @@ void main() {
     });
   });
 
+  group('DownloadService.extractNotFoundTrack', () {
+    test('extrai nome da faixa de LookupError padrão', () {
+      expect(
+        DownloadService.extractNotFoundTrack(
+          'LookupError: No results found for song: Artista - Música',
+        ),
+        equals('Artista - Música'),
+      );
+    });
+
+    test(
+      'extrai nome da faixa com prefixo de logging antes do LookupError',
+      () {
+        expect(
+          DownloadService.extractNotFoundTrack(
+            '[INFO] LookupError: No results found for song: Artista - Música',
+          ),
+          equals('Artista - Música'),
+        );
+      },
+    );
+
+    test('retorna null para linha sem o padrão LookupError', () {
+      expect(DownloadService.extractNotFoundTrack('[download] 50.0%'), isNull);
+    });
+
+    test('retorna null para linha com padrão "returned no usable results"', () {
+      expect(
+        DownloadService.extractNotFoundTrack(
+          '[youtube] abc123: returned no usable results',
+        ),
+        isNull,
+      );
+    });
+
+    test('extrai nome da faixa com acentos e caracteres especiais', () {
+      expect(
+        DownloadService.extractNotFoundTrack(
+          'LookupError: No results found for song: Artista Com Acentuação - Música Especial',
+        ),
+        equals('Artista Com Acentuação - Música Especial'),
+      );
+    });
+
+    test('retorna null para linha vazia', () {
+      expect(DownloadService.extractNotFoundTrack(''), isNull);
+    });
+  });
+
   group('DownloadService.decodeProcessOutput', () {
     test(
       'decodifica UTF-8 com acentos mesmo quando chunks dividem multibyte',

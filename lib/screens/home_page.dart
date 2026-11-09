@@ -130,6 +130,7 @@ class HomePage extends StatelessWidget {
                           progress: homeController.progress,
                           statusMessage: homeController.status,
                           playlistName: homeController.playlistName,
+                          failedTracks: homeController.failedTracks,
                         ),
                       ),
                     ],

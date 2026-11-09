@@ -87,6 +87,16 @@ class DownloadService {
     return match?.group(1);
   }
 
+  /// Extrai o nome da faixa de uma linha com o erro final do spotdl
+  /// (`LookupError: No results found for song: <faixa>`) ou `null`.
+  @visibleForTesting
+  static String? extractNotFoundTrack(String line) {
+    final match = RegExp(
+      r'LookupError: No results found for song:\s*(.+)',
+    ).firstMatch(line.trim());
+    return match?.group(1)?.trim();
+  }
+
   /// Decodifica stdout/stderr de processos externos (UTF-8 forçado via
   /// PYTHONIOENCODING) em linhas completas, tolerando bytes inválidos.
   @visibleForTesting
@@ -104,6 +114,10 @@ class DownloadService {
     required bool generateM3u,
     String? playlistName,
     void Function(String name)? onPlaylistName,
+
+    /// Callback chamado quando o spotdl não encontra uma faixa.
+    /// Recebe o nome da faixa não encontrada (ex.: "Artista - Música").
+    void Function(String track)? onTrackNotFound,
   }) async {
     try {
       // Reseta o estado de cancelamento de uma execução anterior e marca o
@@ -188,10 +202,18 @@ class DownloadService {
             detectedPlaylistName = name;
             onPlaylistName?.call(name);
           }
+          final failed = extractNotFoundTrack(line);
+          if (failed != null) {
+            onTrackNotFound?.call(failed);
+          }
         });
 
         decodeProcessOutput(process.stderr).listen((line) {
           Logger.error(line.trim());
+          final failed = extractNotFoundTrack(line);
+          if (failed != null) {
+            onTrackNotFound?.call(failed);
+          }
         });
 
         exitCode = await process.exitCode;

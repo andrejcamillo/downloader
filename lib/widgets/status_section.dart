@@ -6,6 +6,7 @@ class StatusSection extends StatelessWidget {
   final double progress;
   final String statusMessage;
   final String? playlistName;
+  final List<String> failedTracks;
 
   const StatusSection({
     super.key,
@@ -13,6 +14,7 @@ class StatusSection extends StatelessWidget {
     required this.progress,
     required this.statusMessage,
     required this.playlistName,
+    this.failedTracks = const [],
   });
 
   @override
@@ -33,47 +35,94 @@ class StatusSection extends StatelessWidget {
         ],
 
         // 🔹 Caixa de status com botão copiar
-        if (statusMessage.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.cardColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Mensagem copiável
-                Expanded(
-                  child: SelectableText(
-                    statusMessage,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontFamily: "monospace",
-                      fontSize: 14,
+        if (statusMessage.isNotEmpty) ...[
+          if (failedTracks.isNotEmpty)
+            Tooltip(
+              message:
+                  'Faixas não encontradas:\n• ${failedTracks.join('\n• ')}',
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Mensagem copiável
+                    Expanded(
+                      child: SelectableText(
+                        statusMessage,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontFamily: "monospace",
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+
+                    // Botão copiar
+                    IconButton(
+                      tooltip: "Copiar mensagem",
+                      icon: const Icon(Icons.copy, size: 20),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: statusMessage));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Mensagem copiada para área de transferência",
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.cardColor.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Mensagem copiável
+                  Expanded(
+                    child: SelectableText(
+                      statusMessage,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontFamily: "monospace",
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-                ),
 
-                // Botão copiar
-                IconButton(
-                  tooltip: "Copiar mensagem",
-                  icon: const Icon(Icons.copy, size: 20),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: statusMessage));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Mensagem copiada para área de transferência",
+                  // Botão copiar
+                  IconButton(
+                    tooltip: "Copiar mensagem",
+                    icon: const Icon(Icons.copy, size: 20),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: statusMessage));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Mensagem copiada para área de transferência",
+                          ),
+                          duration: Duration(seconds: 2),
                         ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
+        ],
 
         // 🔹 Playlist
         if (playlistName != null && playlistName!.isNotEmpty) ...[
