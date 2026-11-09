@@ -48,3 +48,8 @@ log.txt
 
 # Lockfile resolvido por máquina (Flutter SDKs diferentes entre PCs de dev)
 pubspec.lock
+
+# Saída do Inno Setup e pacote de distribuição
+/Output/
+/dist/
+/vc_redist.x64.exe
